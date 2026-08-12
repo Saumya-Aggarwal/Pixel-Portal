@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
 import { SPRING } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const GLOW_SIZE = 480;
 

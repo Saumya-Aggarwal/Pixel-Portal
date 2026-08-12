@@ -1,10 +1,11 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { useState } from "react";
 
 import { cn } from "@/lib/cn";
 import { EASE } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const RINGS = [
   { radius: 54, duration: 14, direction: 1, dashed: false, color: "var(--color-brand-400)" },

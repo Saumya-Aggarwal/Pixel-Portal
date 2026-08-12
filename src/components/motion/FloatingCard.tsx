@@ -1,10 +1,11 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "motion/react";
+import { motion, useInView } from "motion/react";
 import { useRef, type ReactNode } from "react";
 
 import { LiftCard } from "@/components/motion/LiftCard";
 import { EASE } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 interface FloatingCardProps {
   children: ReactNode;

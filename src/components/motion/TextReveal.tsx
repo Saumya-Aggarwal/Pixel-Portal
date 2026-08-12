@@ -1,11 +1,11 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
 import { useRef, type ElementType, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { SplitText, gsap, useGSAP } from "@/lib/gsap";
 import { DUR, GSAP_EASE, STAGGER } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 interface TextRevealProps {
   children: ReactNode;

@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
 import { DUR, EASE } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /**
  * The whole-page entrance, mounted once per navigation by `app/template.tsx`.

@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 
 import { cn } from "@/lib/cn";
 import { EASE } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /**
  * Fades a decorative backdrop layer up on mount instead of having it arrive

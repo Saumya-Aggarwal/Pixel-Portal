@@ -1,12 +1,13 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
 import { GlowPulse } from "@/components/motion/GlowPulse";
 import { cn } from "@/lib/cn";
 import { EASE } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /**
  * The Spline runtime is ~1MB of WebGL and touches `window` on import, so it is
@@ -48,6 +49,13 @@ interface SplineSceneProps {
  * perpetually orbiting 3D object is exactly the kind of thing that setting is
  * for, and skipping it also saves the payload — the fallback glow is the same
  * one the panel shows while loading, so the layout is identical either way.
+ *
+ * That still holds now that `useReducedMotion` reports `false` through
+ * hydration, though it is no longer obvious that it does. The hook is backed by
+ * `useSyncExternalStore`, so React reconciles the real value synchronously
+ * after hydrating and before the browser paints — the `<Spline>` element from
+ * that first pass never commits, and `next/dynamic` never triggers its import.
+ * Verified: zero requests to prod.spline.design with the setting on.
  */
 export function SplineScene({ scene, label, className, canvasClassName }: SplineSceneProps) {
   const prefersReduced = useReducedMotion();

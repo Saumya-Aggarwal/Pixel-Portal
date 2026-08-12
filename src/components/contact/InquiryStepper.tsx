@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useReducer, useRef, useState } from "react";
 
 import { CheckCard, FieldGroup, RadioCard, TextArea, TextField } from "@/components/contact/Fields";
@@ -16,6 +16,7 @@ import {
   type Inquiry,
 } from "@/lib/schemas/inquiry";
 import type { Category } from "@/types/content";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 type FormState = {
   services: string[];

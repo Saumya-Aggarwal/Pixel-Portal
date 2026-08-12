@@ -4,13 +4,13 @@ import {
   motion,
   useMotionTemplate,
   useMotionValue,
-  useReducedMotion,
   useSpring,
 } from "motion/react";
 import { useCallback, useRef, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { SPRING } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 interface LiftCardProps {
   children: ReactNode;
@@ -21,6 +21,8 @@ interface LiftCardProps {
   lift?: number;
   /** Green glow that tracks the cursor across the surface. */
   spotlight?: boolean;
+  /** Band of light that crosses the face once per hover. */
+  sweep?: boolean;
 }
 
 /**
@@ -30,8 +32,15 @@ interface LiftCardProps {
  * Tilt is capped low on purpose. Past about 8deg the text on the face starts
  * to shear visibly and the card reads as a gimmick rather than a surface.
  *
- * Like Magnetic, this is gated on an actual cursor being present, and it
- * degrades to a plain container under reduced motion.
+ * Like Magnetic, this is gated on an actual cursor being present, and the
+ * pointer-driven parts degrade to a plain container under reduced motion.
+ *
+ * The wrapper is tagged `group/lift` in both branches, so consumers drive
+ * their own hover response — border colour, icon rotation, a rising wash —
+ * with `group-hover/lift:` utilities rather than this component growing a prop
+ * per effect. Keeping the tag on the reduced-motion branch matters: a border
+ * that answers the pointer is an affordance, not an animation, and should
+ * survive the preference.
  */
 export function LiftCard({
   children,
@@ -39,6 +48,7 @@ export function LiftCard({
   tilt = 6,
   lift = 8,
   spotlight = true,
+  sweep = false,
 }: LiftCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const prefersReduced = useReducedMotion();
@@ -84,7 +94,7 @@ export function LiftCard({
   }, [rotateX, rotateY, translateY, glowOpacity]);
 
   if (prefersReduced) {
-    return <div className={cn("relative", className)}>{children}</div>;
+    return <div className={cn("group/lift relative", className)}>{children}</div>;
   }
 
   return (
@@ -94,7 +104,7 @@ export function LiftCard({
         onPointerMove={handleMove}
         onPointerLeave={handleLeave}
         style={{ rotateX, rotateY, y: translateY, transformStyle: "preserve-3d" }}
-        className={cn("relative h-full", className)}
+        className={cn("group/lift relative h-full", className)}
       >
         {children}
         {spotlight && (
@@ -103,6 +113,17 @@ export function LiftCard({
             style={{ backgroundImage: glow, opacity: glowOpacity }}
             className="pointer-events-none absolute inset-0 rounded-[inherit]"
           />
+        )}
+        {sweep && (
+          // Clipped to the card so the band appears to pass beneath the edge
+          // rather than flying across the page. The inner span carries the
+          // animation; the outer one only masks.
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"
+          >
+            <span className="via-brand-200/70 absolute inset-y-0 left-0 w-1/4 bg-linear-to-r from-transparent to-transparent opacity-0 group-hover/lift:animate-[card-sweep_1.15s_var(--ease-soft)]" />
+          </span>
         )}
       </motion.div>
     </div>

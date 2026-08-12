@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -15,6 +15,7 @@ import { site } from "@/content/site";
 import { cn } from "@/lib/cn";
 import { DUR, EASE } from "@/lib/motion";
 import type { TeamMember } from "@/types/content";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const SPLINE_SCENE = "https://prod.spline.design/NbU6scJvWHLpfXhs/scene.splinecode";
 
@@ -146,9 +147,11 @@ export function Hero({ specialists }: HeroProps) {
    * Derived rather than a second piece of state kept in sync by an effect.
    *
    * A 2.7s hold on an inert screen is exactly the kind of thing the reduced
-   * motion setting is for, so a reader who asked for less gets the resolved
-   * layout on their first frame — and `useReducedMotion` reads the media query
-   * during render, so there is no boot flash to catch up with afterwards.
+   * motion setting is for, so a reader who asked for less skips straight to the
+   * resolved layout. `useReducedMotion` reports `false` through hydration and
+   * the real value on the tick after — deliberately, so the server and client
+   * trees match — which means such a reader may see the boot's first frame
+   * before it resolves. One frame is the price of the page hydrating at all.
    */
   const phase: BootPhase = prefersReduced ? "complete" : rawPhase;
   const isResolved = phase === "complete";

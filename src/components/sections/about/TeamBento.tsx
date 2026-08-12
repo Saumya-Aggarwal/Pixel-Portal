@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { useMemo, useRef, useState } from "react";
 
 import { Frame, initials } from "@/components/media/Frame";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { DESKTOP_QUERY, DUR, EASE, STAGGER } from "@/lib/motion";
 import type { BentoSize, TeamMember } from "@/types/content";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /** Bento placement. Sizes collapse toward 1x1 as the track narrows. */
 const spans: Record<BentoSize, string> = {

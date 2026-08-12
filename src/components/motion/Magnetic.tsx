@@ -1,10 +1,11 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import { motion, useMotionValue, useSpring } from "motion/react";
 import { useCallback, useRef, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { SPRING } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 interface MagneticProps {
   children: ReactNode;

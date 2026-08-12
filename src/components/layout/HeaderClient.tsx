@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import { Container } from "@/components/ui/Layout";
 import { cn } from "@/lib/cn";
 import { DUR, EASE } from "@/lib/motion";
 import type { Category, NavItem } from "@/types/content";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 interface HeaderClientProps {
   nav: NavItem[];

@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /** Soft pulsing radial glow — placeholder for the future 3D asset. */
 export function GlowPulse() {

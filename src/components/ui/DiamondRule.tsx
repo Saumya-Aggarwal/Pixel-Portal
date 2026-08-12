@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 
 import { cn } from "@/lib/cn";
 import { DUR, EASE, VIEWPORT } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /**
  * One explicit `linear-gradient` rather than Tailwind's
