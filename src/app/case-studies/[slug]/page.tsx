@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { CountUp } from "@/components/motion/CountUp";
 import { ParallaxImage } from "@/components/motion/ParallaxImage";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
+import { StatRail } from "@/components/sections/StatRail";
 import { ArrowGlyph } from "@/components/ui/Button";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
 import { getCaseStudies, getCaseStudy, getServicesBySlugs } from "@/lib/content";
@@ -78,18 +78,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
       {/* ---- Metric band ---- */}
       <Section spacing="tight" className="bg-paper" divider>
         <Container wide>
-          <RevealGroup className="divide-hair grid grid-cols-2 gap-y-10 lg:grid-cols-4 lg:divide-x">
-            {study.metrics.map((metric) => (
-              <RevealItem key={metric.label} className="lg:px-8 lg:first:pl-0 lg:last:pr-0">
-                <p className="font-display text-brand-600 text-[clamp(2.25rem,5vw,3.5rem)] leading-none font-semibold tracking-tight">
-                  <CountUp value={metric.value} prefix={metric.prefix} suffix={metric.suffix} />
-                </p>
-                <p className="text-ink-soft mt-3.5 max-w-[20ch] text-[0.9375rem] leading-snug">
-                  {metric.label}
-                </p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
+          <StatRail items={study.metrics} size="sm" labelWidth="max-w-[20ch]" />
         </Container>
       </Section>
 

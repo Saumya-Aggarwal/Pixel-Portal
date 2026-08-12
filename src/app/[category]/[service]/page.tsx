@@ -7,6 +7,10 @@ import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
 import { ServiceSections } from "@/components/sections/service/ServiceSections";
+import {
+  ServiceHeroVisual,
+  heroLayoutFor,
+} from "@/components/sections/service/visuals/ServiceHeroVisual";
 import { ArrowGlyph } from "@/components/ui/Button";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
 import { getCategories, getCaseStudiesForService, getService } from "@/lib/content";
@@ -72,7 +76,15 @@ export default async function ServicePage({ params }: PageProps<"/[category]/[se
           { label: category.title, href: `/${category.slug}` },
           { label: service.navTitle ?? service.title, href: `/${category.slug}/${service.slug}` },
         ]}
-      />
+        // Blueprint-built illustrations sit beside the copy; the rest keep the
+        // full-width band beneath it they were drawn for. The illustration
+        // decides, so the two can never disagree.
+        layout={heroLayoutFor(service.visual)}
+      >
+        {service.visual && (
+          <ServiceHeroVisual visual={service.visual} title={service.title} />
+        )}
+      </PageHero>
 
       {/* ---- Deliverables (base template — every service gets this) ---- */}
       <Section spacing="base" divider>

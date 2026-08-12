@@ -81,6 +81,19 @@
   --shadow-lift-lg: 0 2px 4px rgb(13 58 32 / 0.05), 0 32px 64px -16px rgb(13 58 32 / 0.18);
   --shadow-glass: inset 0 1px 0 0 rgb(255 255 255 / 0.6), 0 8px 32px -8px rgb(13 58 32 / 0.12);
 
+  /* ---- Illustration depth ----
+     A separate, quieter elevation scale for the hero depictions.
+
+     The shadows above are tuned for cards sitting on the page; used inside an
+     illustration they read as heavy, because there are several panels at once
+     and the shadows compound. These use a desaturated green-grey (ink-soft
+     #2c3831) at very low alpha, layered twice — a tight contact shadow plus a
+     wide ambient one — which is what simulates occlusion on a white ground
+     without the muddy grey cast a single mid-opacity shadow produces. */
+  --shadow-float: 0 4px 12px -2px rgb(44 56 49 / 0.04), 0 24px 48px -12px rgb(44 56 49 / 0.08);
+  /* Hover state: same recipe, lifted and spread. */
+  --shadow-float-hover: 0 6px 16px -2px rgb(44 56 49 / 0.06), 0 36px 64px -12px rgb(44 56 49 / 0.12);
+
   --radius-card: 1.25rem;
   --radius-panel: 2rem;
 }
@@ -90,6 +103,13 @@
    ========================================================================== */
 
 @layer base {
+  :root {
+    /* Written every frame by ScrollProvider, normalised 0..1. Declared here so
+       that consumers resolve to "still" rather than an invalid value before
+       hydration, and on the reduced-motion path where Lenis never mounts. */
+    --scroll-velocity: 0;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -178,6 +198,29 @@
     linear-gradient(to right, var(--color-hair) 1px, transparent 1px),
     linear-gradient(to bottom, var(--color-hair) 1px, transparent 1px);
   background-size: 72px 72px;
+}
+
+/* A band of light crossing a card face once on hover. Opt in via LiftCard's
+   `sweep` prop; the animation is named so consumers can retime it. The skew is
+   what stops it reading as a plain wipe. */
+@keyframes card-sweep {
+  0% {
+    transform: translateX(-140%) skewX(-18deg);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+/* Vertical rail that fills as the reader scrolls past it. Scaled from the top
+   edge so the fill grows downward with the scroll direction. */
+@utility rail-origin-top {
+  transform-origin: top center;
 }
 
 /* ==========================================================================

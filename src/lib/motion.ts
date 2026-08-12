@@ -44,6 +44,33 @@ export const STAGGER = {
   loose: 0.14,
 } as const;
 
+/**
+ * Entrance blur, in px.
+ *
+ * A reveal that only fades and rises reads as a slideshow; the same reveal
+ * resolving out of a blur reads as depth. It is the cheapest thing on this
+ * list and it does more for perceived quality than any other single value.
+ *
+ * Two constraints keep it honest:
+ *
+ * `filter` establishes a containing block for `position: fixed` descendants,
+ * exactly like `transform` does — the hazard RouteTransition and BackdropIn
+ * already document. Anything wrapping fixed-position children must pass
+ * `blur={0}`.
+ *
+ * And the filter is cleared to `none` once the tween lands rather than left
+ * at `blur(0px)`, so a settled section stops paying for a compositing layer
+ * it no longer uses.
+ */
+export const BLUR = {
+  /** Cards, list rows, chips — anything arriving as a group. */
+  base: 8,
+  /** Large surfaces, where a wide blur radius costs real frames. */
+  subtle: 4,
+  /** Off. Use inside any subtree containing `position: fixed`. */
+  none: 0,
+} as const;
+
 /** Springs for pointer-driven motion (magnetic buttons, card tilt). */
 export const SPRING = {
   /** Snappy, low overshoot — cursor following. */

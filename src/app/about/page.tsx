@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 
-import { CountUp } from "@/components/motion/CountUp";
 import { ParallaxImage } from "@/components/motion/ParallaxImage";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
+import { TrustPanel } from "@/components/sections/TrustPanel";
 import { TeamBento } from "@/components/sections/about/TeamBento";
 import { ArrowGlyph, Button } from "@/components/ui/Button";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
-import { site, stats } from "@/content/site";
+import { site } from "@/content/site";
 import { getDepartments, getTeam } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -107,22 +107,9 @@ export default async function AboutPage() {
       </Section>
 
       {/* ---- Numbers ---- */}
-      <Section spacing="tight" className="bg-paper" divider>
-        <Container wide>
-          <RevealGroup className="divide-hair grid grid-cols-2 gap-y-10 lg:grid-cols-4 lg:divide-x">
-            {stats.map((stat) => (
-              <RevealItem key={stat.label} className="lg:px-8 lg:first:pl-0 lg:last:pr-0">
-                <p className="font-display text-brand-600 text-[clamp(2.5rem,5vw,4rem)] leading-none font-semibold tracking-tight">
-                  <CountUp value={stat.value} suffix={stat.suffix} />
-                </p>
-                <p className="text-ink-soft mt-3.5 max-w-[18ch] text-[0.9375rem] leading-snug">
-                  {stat.label}
-                </p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </Container>
-      </Section>
+      {/* `clients` on here but not on home: this page has no ClientStrip, so
+          the marquee is the only place the roster appears. */}
+      <TrustPanel clients className="bg-paper" />
 
       {/* ---- Team bento ---- */}
       <Section spacing="base" id="team" divider>
