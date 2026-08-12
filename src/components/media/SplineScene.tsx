@@ -1,0 +1,88 @@
+"use client";
+
+import { motion, useReducedMotion } from "motion/react";
+import dynamic from "next/dynamic";
+import { useState } from "react";
+
+import { GlowPulse } from "@/components/motion/GlowPulse";
+import { cn } from "@/lib/cn";
+import { EASE } from "@/lib/motion";
+
+/**
+ * The Spline runtime is ~1MB of WebGL and touches `window` on import, so it is
+ * loaded client-side only and kept out of the initial bundle. `next/dynamic`
+ * with `ssr: false` is legal here (and only here) because this module is a
+ * Client Component — the same call from a Server Component is a build error.
+ */
+const Spline = dynamic(() => import("@splinetool/react-spline"), {
+  ssr: false,
+  loading: () => <GlowPulse />,
+});
+
+interface SplineSceneProps {
+  /** Published `.splinecode` URL. */
+  scene: string;
+  /**
+   * What the scene depicts. The canvas is decorative but not empty to a
+   * screen reader, so the wrapper claims it as a single labelled image
+   * instead of leaving an unnamed <canvas> in the tree.
+   */
+  label: string;
+  className?: string;
+  /**
+   * Applied to the div that directly wraps `<Spline />`, and nothing else.
+   *
+   * This is where colour filters belong. Put a `hue-rotate` on the outer
+   * element instead and it also rotates the loading glow, which is already
+   * brand green and would come out lime.
+   */
+  canvasClassName?: string;
+}
+
+/**
+ * A Spline scene with the two things the bare component does not give you:
+ * a fallback for the seconds before the scene streams in, and an exit hatch
+ * for people who asked for less motion.
+ *
+ * Under `prefers-reduced-motion` the runtime is never fetched at all. A
+ * perpetually orbiting 3D object is exactly the kind of thing that setting is
+ * for, and skipping it also saves the payload — the fallback glow is the same
+ * one the panel shows while loading, so the layout is identical either way.
+ */
+export function SplineScene({ scene, label, className, canvasClassName }: SplineSceneProps) {
+  const prefersReduced = useReducedMotion();
+  const [loaded, setLoaded] = useState(false);
+
+  if (prefersReduced) {
+    return (
+      <div role="img" aria-label={label} className={cn("h-full w-full", className)}>
+        <GlowPulse />
+      </div>
+    );
+  }
+
+  return (
+    <div role="img" aria-label={label} className={cn("relative h-full w-full", className)}>
+      {/* Cross-fade rather than a swap: the glow holds the panel's visual
+          weight until the scene can take it over, so the card never flashes
+          empty white mid-load. */}
+      <motion.div
+        aria-hidden
+        className="absolute inset-0"
+        animate={{ opacity: loaded ? 0 : 1 }}
+        transition={{ duration: 0.7, ease: EASE.out }}
+      >
+        <GlowPulse />
+      </motion.div>
+
+      <motion.div
+        className={cn("h-full w-full", canvasClassName)}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: loaded ? 1 : 0 }}
+        transition={{ duration: 0.9, ease: EASE.out }}
+      >
+        <Spline scene={scene} onLoad={() => setLoaded(true)} />
+      </motion.div>
+    </div>
+  );
+}
