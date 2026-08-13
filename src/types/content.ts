@@ -46,10 +46,27 @@ export type ServiceSection =
   | { type: "process"; heading: string; steps: ProcessStep[] }
   | { type: "faq"; heading: string; items: { q: string; a: string }[] }
   | { type: "pillars"; items: Pillar[] }
-  | { type: "capabilities"; heading: string; intro?: string; items: Capability[] }
+  | {
+      type: "capabilities";
+      heading: string;
+      intro?: string;
+      items: Capability[];
+    }
   | { type: "tags"; heading: string; intro?: string; items: string[] }
-  | { type: "checklist"; eyebrow: string; heading: string; body?: string[]; items: string[] }
-  | { type: "comparison"; heading: string; intro?: string; columns: [string, string]; rows: ComparisonRow[] };
+  | {
+      type: "checklist";
+      eyebrow: string;
+      heading: string;
+      body?: string[];
+      items: string[];
+    }
+  | {
+      type: "comparison";
+      heading: string;
+      intro?: string;
+      columns: [string, string];
+      rows: ComparisonRow[];
+    };
 
 /** Three-across value proposition, directly under the hero. */
 export interface Pillar {
@@ -79,39 +96,36 @@ export interface ComparisonRow {
 /**
  * Animated hero visual for a service page.
  *
- * Two generations live here at once, deliberately.
+ * Each member draws the actual subject — a phone running a feed, a queue
+ * dropping a message, a table draining into another table. They carry their own
+ * labels, because a scrubber reading `0:15 / 1:00` is part of the drawing rather
+ * than content anyone would edit in a CMS.
  *
- * **Bespoke depictions** draw the actual subject — a phone running a feed, a
- * browser assembling a page, a queue dropping a message. They carry their own
- * labels, because a scrubber reading `0:15 / 1:00` is part of the drawing
- * rather than content anyone would edit in a CMS.
- *
- * **Archetypes** are the earlier generation: abstract shapes configured from
- * content. They are being replaced one service at a time. Deleting them before
- * their last consumer migrates would strip the hero visual from nine pages
- * mid-flight, so they stay until wave 2 — and the exhaustive `switch` in
- * `ServiceHeroVisual` turns that eventual cleanup into a compile error rather
- * than a silently blank frame.
+ * A kind takes no configuration. The earlier generation of abstract archetypes
+ * did — `{ kind: "stack", layers: string[] }` and so on — and the result was
+ * that two services with similar-length label arrays drew the same picture. The
+ * drawing is now the component, and the exhaustive `switch` in
+ * `ServiceHeroVisual` makes an unhandled kind a compile error rather than a
+ * silently blank frame.
  */
 export type ServiceVisual =
-  // Bespoke depictions.
+  // The second half of each name is the topology, which is assigned per service
+  // and deliberately varied — three of the first four shipped with the same
+  // silhouette before this was tracked explicitly.
   | { kind: "social-feed" }
-  | { kind: "page-assembly" }
   | { kind: "live-dashboard" }
   | { kind: "cart-checkout" }
   | { kind: "queue-retry" }
-  // Archetypes — retiring.
-  | { kind: "beams"; left: VisualNode[]; right: VisualNode[] }
-  | { kind: "funnel"; stages: string[]; callouts?: string[] }
-  | { kind: "dashboard"; panels: string[]; kpis: Metric[] }
-  | { kind: "orbit"; nodes: string[] }
-  | { kind: "stack"; layers: string[] };
-
-export interface VisualNode {
-  label: string;
-  /** Optional figure shown beside the label, e.g. "6.3x" or "12,450+". */
-  value?: string;
-}
+  | { kind: "ads-funnel" }
+  | { kind: "crawl-graph" }
+  | { kind: "email-flow" }
+  | { kind: "layered-planes" }
+  | { kind: "marketplace-bridge" }
+  | { kind: "headless-seam" }
+  | { kind: "breakpoint-ruler" }
+  | { kind: "app-shell" }
+  | { kind: "pipeline-stair" }
+  | { kind: "table-transfer" };
 
 export interface Metric {
   /** Numeric portion, animated by CountUp. */

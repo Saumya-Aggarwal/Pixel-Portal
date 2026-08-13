@@ -8,6 +8,14 @@ import { Backlight } from "@/components/sections/service/visuals/chrome/Backligh
 import { CalloutChip } from "@/components/sections/service/visuals/chrome/Callout";
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
+import {
+  H,
+  W,
+  beat,
+  px,
+  py,
+  ts,
+} from "@/components/sections/service/visuals/canvas";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -34,34 +42,27 @@ import { EASE } from "@/lib/motion";
  * difference between an illustration and a distraction.
  */
 
-/** Blueprint canvas. All coordinates below are in this space. */
-const W = 960;
-const H = 640;
-
-/** Blueprint px -> percentage of canvas. */
-const px = (v: number) => `${((v / W) * 100).toFixed(3)}%`;
-const py = (v: number) => `${((v / H) * 100).toFixed(3)}%`;
-
-/**
- * Blueprint px -> container-relative type size, floored at 10px.
- *
- * `cqw` keeps type in proportion as the canvas scales; the floor stops the 11px
- * labels turning to mush on a narrow viewport, where the system minimum is
- * 10px.
- */
-const ts = (v: number) => `max(0.625rem, ${((v / W) * 100).toFixed(3)}cqw)`;
-
 const LOOP = 12;
 /** Blueprint timings in seconds, as fractions of the loop. */
-const at = (seconds: number) => seconds / LOOP;
+const at = (seconds: number) => beat(seconds, LOOP);
 
 /** Chart plot area, in its own 480x180 space. Peak at x=310 carries the tooltip. */
 const PLOT = [
-  [0, 152], [53, 140], [107, 146], [160, 118], [213, 96],
-  [267, 54], [310, 20], [373, 48], [427, 38], [480, 26],
+  [0, 152],
+  [53, 140],
+  [107, 146],
+  [160, 118],
+  [213, 96],
+  [267, 54],
+  [310, 20],
+  [373, 48],
+  [427, 38],
+  [480, 26],
 ] as const;
 
-const LINE = PLOT.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x} ${y}`).join(" ");
+const LINE = PLOT.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x} ${y}`).join(
+  " ",
+);
 const PEAK = { x: 310, y: 20 };
 
 export function LiveDashboard() {
@@ -119,7 +120,12 @@ export function LiveDashboard() {
               transition={
                 running
                   ? {
-                      cx: { duration: LOOP, times: [0, at(1.5), 1], repeat: Infinity, ease: "linear" },
+                      cx: {
+                        duration: LOOP,
+                        times: [0, at(1.5), 1],
+                        repeat: Infinity,
+                        ease: "linear",
+                      },
                       opacity: {
                         duration: LOOP,
                         times: [0, at(0.2), at(1.3), at(1.5), 1],
@@ -180,8 +186,14 @@ export function LiveDashboard() {
           <span className="text-ink font-medium" style={{ fontSize: ts(14) }}>
             Revenue Attribution
           </span>
-          <span className="text-muted flex items-center" style={{ gap: ts(6), fontSize: ts(11) }}>
-            <span className="bg-brand-500 rounded-full" style={{ width: ts(6), height: ts(6) }} />
+          <span
+            className="text-muted flex items-center"
+            style={{ gap: ts(6), fontSize: ts(11) }}
+          >
+            <span
+              className="bg-brand-500 rounded-full"
+              style={{ width: ts(6), height: ts(6) }}
+            />
             Live
           </span>
         </div>
@@ -255,9 +267,18 @@ export function LiveDashboard() {
           style={{ fontSize: ts(24) }}
         >
           {/* TODO(content): illustrative figures. Believable, not measured. */}
-          <CountUp value={142840} from={82100} prefix="$" delay={2} duration={2} />
+          <CountUp
+            value={142840}
+            from={82100}
+            prefix="$"
+            delay={2}
+            duration={2}
+          />
         </span>
-        <span className="text-ink-soft" style={{ fontSize: ts(12), marginTop: ts(8) }}>
+        <span
+          className="text-ink-soft"
+          style={{ fontSize: ts(12), marginTop: ts(8) }}
+        >
           Attributed
         </span>
       </FloatPanel>
@@ -299,7 +320,10 @@ function SourcePanel({
         className="text-ink-soft flex items-center"
         style={{ fontSize: ts(12), marginTop: ts(6), gap: ts(6) }}
       >
-        <span className="bg-brand-400 rounded-full" style={{ width: ts(5), height: ts(5) }} />
+        <span
+          className="bg-brand-400 rounded-full"
+          style={{ width: ts(5), height: ts(5) }}
+        />
         {detail}
       </span>
     </FloatPanel>
@@ -324,7 +348,11 @@ function Chart({ running }: { running: boolean }) {
       viewBox="0 0 480 240"
       aria-hidden
       className="absolute"
-      style={{ left: "7.143%", top: "38.095%", width: "85.714%" }}
+      // Blueprint puts the plot at 38.095% down the panel, which lands the
+      // x-axis labels at canvas y444 — directly under the summary card, whose
+      // intended overlap starts at y440. Raising the plot 30px clears the
+      // label row while keeping the card's overlap of the panel corner.
+      style={{ left: "7.143%", top: "30.952%", width: "85.714%" }}
     >
       {/* Value gridlines. Ambient — they give the curve something to be read
           against without competing with it. */}
@@ -333,14 +361,34 @@ function Chart({ running }: { running: boolean }) {
         { y: 100, label: "$10k" },
       ].map((g) => (
         <g key={g.label}>
-          <line x1={0} y1={g.y} x2={480} y2={g.y} stroke="var(--color-hair)" strokeWidth={1} />
-          <text x={0} y={g.y - 8} fontSize={11} fill="var(--color-muted)" className="font-sans">
+          <line
+            x1={0}
+            y1={g.y}
+            x2={480}
+            y2={g.y}
+            stroke="var(--color-hair)"
+            strokeWidth={1}
+          />
+          <text
+            x={0}
+            y={g.y - 8}
+            fontSize={11}
+            fill="var(--color-muted)"
+            className="font-sans"
+          >
             {g.label}
           </text>
         </g>
       ))}
 
-      <line x1={0} y1={180} x2={480} y2={180} stroke="var(--color-hair)" strokeWidth={1} />
+      <line
+        x1={0}
+        y1={180}
+        x2={480}
+        y2={180}
+        stroke="var(--color-hair)"
+        strokeWidth={1}
+      />
       {["Oct 12", "Oct 13", "Oct 14"].map((label, i) => (
         <text
           key={label}
@@ -363,7 +411,9 @@ function Chart({ running }: { running: boolean }) {
         strokeLinejoin="round"
         initial={false}
         animate={
-          running ? { pathLength: [0, 0, 1, 1, 1], opacity: [1, 1, 1, 1, 0] } : { pathLength: 1, opacity: 1 }
+          running
+            ? { pathLength: [0, 0, 1, 1, 1], opacity: [1, 1, 1, 1, 0] }
+            : { pathLength: 1, opacity: 1 }
         }
         transition={running ? draw : undefined}
       />
@@ -387,13 +437,22 @@ function Chart({ running }: { running: boolean }) {
         <line
           x1={PEAK.x}
           y1={PEAK.y}
+          // Stops at the tooltip's lower edge. Tracks the plot offset above:
+          // raising the plot shortened this gap by the same 30px.
           x2={PEAK.x}
-          y2={-46}
+          y2={-26}
           stroke="var(--color-brand-200)"
           strokeWidth={1.5}
           strokeDasharray="4 4"
         />
-        <circle cx={PEAK.x} cy={PEAK.y} r={5} fill="white" stroke="var(--color-brand-600)" strokeWidth={2.5} />
+        <circle
+          cx={PEAK.x}
+          cy={PEAK.y}
+          r={5}
+          fill="white"
+          stroke="var(--color-brand-600)"
+          strokeWidth={2.5}
+        />
       </motion.g>
     </svg>
   );

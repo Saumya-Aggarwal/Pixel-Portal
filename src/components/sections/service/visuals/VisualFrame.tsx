@@ -5,16 +5,21 @@ import { cn } from "@/lib/cn";
 /**
  * Shared surface for every service hero visual.
  *
- * Keeping the frame here rather than in each archetype is what lets five very
- * different pictures still read as one family: same panel radius, same
- * hairline, same grid ground fading out at the edges. An archetype only has to
- * draw its own subject.
+ * Now only the `role="img"` wrapper and its label. The frame used to also draw a
+ * bordered panel, a grid ground and a backlight, which was right when the
+ * illustrations were abstract archetypes sharing one look. Every illustration is
+ * built to the 960x640 blueprint canvas now and brings its own ground —
+ * a `GridGround` and a `Backlight` placed for that specific composition — and a
+ * second border around that read as a screenshot pasted onto the page.
+ *
+ * Kept rather than inlined because the accessible label is the part that must
+ * not drift: one wrapper means one place where a picture can lose its
+ * description.
  */
 export function VisualFrame({
   children,
   className,
   label,
-  bare = false,
 }: {
   children: ReactNode;
   className?: string;
@@ -24,44 +29,10 @@ export function VisualFrame({
    * already in the heading and the sections below.
    */
   label: string;
-  /**
-   * Drop the border, fill and shared backdrop, letting the illustration float
-   * free on the page.
-   *
-   * A hard bordered box makes the picture look like a screenshot pasted onto
-   * the page. Blueprint-built illustrations bring their own ground — a masked
-   * `GridGround` and a `Backlight` positioned for that specific composition —
-   * and look worse inside a second frame. The archetypes still need this
-   * frame, so it stays until the last one is rebuilt.
-   */
-  bare?: boolean;
 }) {
-  if (bare) {
-    return (
-      <div role="img" aria-label={label} className={cn("relative", className)}>
-        {children}
-      </div>
-    );
-  }
-
   return (
-    <div
-      role="img"
-      aria-label={label}
-      className={cn(
-        "border-hair rounded-panel bg-paper relative overflow-hidden border",
-        className,
-      )}
-    >
-      <span
-        aria-hidden
-        className="grid-field absolute inset-0 opacity-70 mask-[radial-gradient(ellipse_75%_75%_at_50%_45%,black,transparent)]"
-      />
-      <span
-        aria-hidden
-        className="bg-brand-100/40 pointer-events-none absolute -top-24 left-1/2 size-96 -translate-x-1/2 rounded-full blur-3xl"
-      />
-      <div className="relative h-full">{children}</div>
+    <div role="img" aria-label={label} className={cn("relative", className)}>
+      {children}
     </div>
   );
 }

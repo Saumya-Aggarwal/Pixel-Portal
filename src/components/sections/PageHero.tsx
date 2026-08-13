@@ -158,11 +158,12 @@ export function PageHero({
           )}
 
           {split && children && (
-            // Overruns its column to the right so the illustration reaches the
-            // viewport edge. The section already clips, so the overhang is
-            // trimmed rather than adding a scrollbar. ~6vw is inside the
-            // blueprint's stated 120px safe crop.
-            <div className="col-span-12 lg:col-span-7 lg:w-[calc(100%+6vw)]">{children}</div>
+            // No overhang. An earlier version pushed this 6vw past the column
+            // to reach the viewport edge, but the blueprint already reserves a
+            // 40px right margin inside its own canvas — bleeding on top of that
+            // ate the margin and then clipped the primary panel's corner. The
+            // canvas keeps its own breathing room; the column just holds it.
+            <div className="col-span-12 lg:col-span-7">{children}</div>
           )}
         </div>
 

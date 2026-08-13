@@ -58,6 +58,14 @@ export function FloatPanel({
       )}
       style={{
         boxShadow: focal ? "var(--shadow-float-hover)" : "var(--shadow-float)",
+        // Promote any floating panel to its own compositor layer.
+        //
+        // Without this the bob is smooth in isolation and visibly jittery once
+        // several large panels overlap: each frame the browser repaints the
+        // union of their 48px-blur shadows, and that area grows with every
+        // panel added. On its own layer the movement is a composite step and
+        // the shadow is rasterised once.
+        willChange: float ? "transform" : undefined,
         ...style,
       }}
       animate={bob.animate}

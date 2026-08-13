@@ -91,122 +91,166 @@ export function HeaderClient({ nav, categories }: HeaderClientProps) {
   const activeCategory = categories.find((c) => c.slug === openCategory);
 
   return (
-    <header
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color,box-shadow] duration-500 ease-soft",
-        scrolled || openCategory
-          ? "border-hair/80 border-b bg-white/75 shadow-[0_1px_24px_-12px_rgb(13_58_32/0.25)] backdrop-blur-xl backdrop-saturate-150"
-          : "border-b border-transparent bg-transparent",
-      )}
-      onMouseLeave={scheduleClose}
-    >
-      <Container wide>
-        <div className="flex h-18 items-center justify-between gap-6 lg:h-20">
-          <Link href="/" aria-label="Pixel Portal — home" className="shrink-0">
-            <Logo />
-          </Link>
+    <header className="fixed inset-x-0 top-0 z-50" onMouseLeave={scheduleClose}>
+      {/* The frosted treatment belongs to the bar, not to `header`.
+          `header` is the box that contains the mega-menu, so a backdrop-filter
+          here grew with the panel: opening the menu blurred everything behind
+          a ~460px-tall region, which read as a blank hole punched through the
+          page. Scoped to the bar it can only ever blur the 80px strip it
+          actually sits on, whatever is open below it. */}
+      <div
+        className={cn(
+          "transition-[background-color,backdrop-filter,border-color,box-shadow] duration-500 ease-soft",
+          scrolled || openCategory
+            ? "border-hair/80 border-b bg-white/75 shadow-[0_1px_24px_-12px_rgb(13_58_32/0.25)] backdrop-blur-xl backdrop-saturate-150"
+            : "border-b border-transparent bg-transparent",
+        )}
+      >
+        <Container wide>
+          <div className="flex h-18 items-center justify-between gap-6 lg:h-20">
+            <Link
+              href="/"
+              aria-label="Pixel Portal — home"
+              className="shrink-0"
+            >
+              <Logo />
+            </Link>
 
-          {/* ---- Desktop navigation ---- */}
-          <nav aria-label="Primary" className="hidden lg:block">
-            <ul className="flex items-center gap-1">
-              {nav.map((item) => {
-                const hasMenu = Boolean(item.categorySlug);
-                const expanded = openCategory === item.categorySlug;
+            {/* ---- Desktop navigation ---- */}
+            <nav aria-label="Primary" className="hidden lg:block">
+              <ul className="flex items-center gap-1">
+                {nav.map((item) => {
+                  const hasMenu = Boolean(item.categorySlug);
+                  const expanded = openCategory === item.categorySlug;
 
-                return (
-                  <li
-                    key={item.href}
-                    onMouseEnter={
-                      hasMenu
-                        ? () => {
-                            cancelClose();
-                            setOpenCategory(item.categorySlug!);
-                          }
-                        : () => scheduleClose()
-                    }
-                  >
-                    <Link
-                      href={item.href}
-                      // The link navigates; the aria-expanded state describes
-                      // the panel it also reveals. Screen-reader users can go
-                      // straight to the category page and skip the menu.
-                      aria-expanded={hasMenu ? expanded : undefined}
-                      aria-haspopup={hasMenu ? "true" : undefined}
-                      onFocus={
-                        hasMenu ? () => setOpenCategory(item.categorySlug!) : () => setOpenCategory(null)
+                  return (
+                    <li
+                      key={item.href}
+                      onMouseEnter={
+                        hasMenu
+                          ? () => {
+                              cancelClose();
+                              setOpenCategory(item.categorySlug!);
+                            }
+                          : () => scheduleClose()
                       }
-                      className={cn(
-                        "relative inline-flex h-10 items-center rounded-full px-4 text-[0.9375rem] transition-colors duration-300",
-                        isActive(item.href)
-                          ? "text-brand-800"
-                          : "text-ink-soft hover:text-brand-700",
-                      )}
                     >
-                      {item.label}
-                      {isActive(item.href) && (
-                        <motion.span
-                          layoutId={prefersReduced ? undefined : "nav-pill"}
-                          className="bg-brand-50 absolute inset-0 -z-10 rounded-full"
-                          transition={{ duration: DUR.fast, ease: EASE.soft }}
-                        />
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+                      <Link
+                        href={item.href}
+                        // The link navigates; the aria-expanded state describes
+                        // the panel it also reveals. Screen-reader users can go
+                        // straight to the category page and skip the menu.
+                        aria-expanded={hasMenu ? expanded : undefined}
+                        aria-haspopup={hasMenu ? "true" : undefined}
+                        onFocus={
+                          hasMenu
+                            ? () => setOpenCategory(item.categorySlug!)
+                            : () => setOpenCategory(null)
+                        }
+                        className={cn(
+                          "relative inline-flex h-10 items-center rounded-full px-4 text-[0.9375rem] transition-colors duration-300",
+                          isActive(item.href)
+                            ? "text-brand-800"
+                            : "text-ink-soft hover:text-brand-700",
+                        )}
+                      >
+                        {item.label}
+                        {isActive(item.href) && (
+                          <motion.span
+                            layoutId={prefersReduced ? undefined : "nav-pill"}
+                            className="bg-brand-50 absolute inset-0 -z-10 rounded-full"
+                            transition={{ duration: DUR.fast, ease: EASE.soft }}
+                          />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
 
-          <div className="hidden shrink-0 lg:block">
-            <Magnetic strength={0.3} padding={8}>
-              <Button href="/contact" size="sm" className="group">
-                Start a project
-                <ArrowGlyph />
-              </Button>
-            </Magnetic>
+            <div className="hidden shrink-0 lg:block">
+              <Magnetic strength={0.3} padding={8}>
+                <Button href="/contact" size="sm" className="group">
+                  Start a project
+                  <ArrowGlyph />
+                </Button>
+              </Magnetic>
+            </div>
+
+            {/* ---- Mobile trigger ---- */}
+            <button
+              type="button"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
+              className="text-ink -mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-full lg:hidden"
+            >
+              <span className="sr-only">
+                {mobileOpen ? "Close menu" : "Open menu"}
+              </span>
+              <span className="relative block h-4 w-6" aria-hidden>
+                <span
+                  className={cn(
+                    "bg-ink absolute left-0 block h-[1.5px] w-6 transition-all duration-300 ease-out-expo",
+                    mobileOpen ? "top-1.75 rotate-45" : "top-0.75",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "bg-ink absolute left-0 block h-[1.5px] w-6 transition-all duration-300 ease-out-expo",
+                    mobileOpen ? "top-1.75 -rotate-45" : "top-2.75",
+                  )}
+                />
+              </span>
+            </button>
           </div>
-
-          {/* ---- Mobile trigger ---- */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen((open) => !open)}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-menu"
-            className="text-ink -mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-full lg:hidden"
-          >
-            <span className="sr-only">{mobileOpen ? "Close menu" : "Open menu"}</span>
-            <span className="relative block h-4 w-6" aria-hidden>
-              <span
-                className={cn(
-                  "bg-ink absolute left-0 block h-[1.5px] w-6 transition-all duration-300 ease-out-expo",
-                  mobileOpen ? "top-1.75 rotate-45" : "top-0.75",
-                )}
-              />
-              <span
-                className={cn(
-                  "bg-ink absolute left-0 block h-[1.5px] w-6 transition-all duration-300 ease-out-expo",
-                  mobileOpen ? "top-1.75 -rotate-45" : "top-2.75",
-                )}
-              />
-            </span>
-          </button>
-        </div>
-      </Container>
+        </Container>
+      </div>
 
       {/* ---- Mega-menu ---- */}
       <AnimatePresence>
         {activeCategory && (
           <motion.div
-            key={activeCategory.slug}
+            // Constant key, deliberately — NOT the category slug. Keying on the
+            // slug made every category-to-category move an unmount plus a
+            // mount, so for the length of the exit both panels existed at once.
+            // In normal flow that stacked them: the header grew to two panels
+            // tall and the incoming panel was shoved down by the full height of
+            // the outgoing one, with the page showing through the gap. One
+            // persistent panel whose contents change has no such window.
+            key="mega-menu"
             initial={prefersReduced ? false : { opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
             transition={{ duration: DUR.fast, ease: EASE.out }}
             onMouseEnter={cancelClose}
-            className="border-hair/70 hidden border-t bg-white/85 backdrop-blur-xl lg:block"
+            // Out of flow as well, so opening and closing can never resize the
+            // header itself. `header` is `fixed` and therefore the containing
+            // block, and the panel no longer contributes height to it, so
+            // `top-full` resolves to the bottom edge of the bar.
+            //
+            // Opaque, not translucent. At 85% over a blur this panel used to
+            // let the hero show through as an unreadable smear — and now that
+            // every service hero is a field of pale floating panels, that
+            // smear reads as a blank hole punched in the page. A solid surface
+            // also drops a full-viewport backdrop-filter from the hover path,
+            // which is what made opening the menu feel like a stutter.
+            className="border-hair/70 absolute inset-x-0 top-full hidden border-t bg-white shadow-[0_18px_40px_-24px_rgb(13_58_32/0.25)] lg:block"
           >
             <Container wide>
-              <div className="grid grid-cols-12 gap-8 py-10">
+              {/* Keyed, but with no `AnimatePresence` around it: React drops the
+                  old contents in the same commit that mounts the new ones, so
+                  only one set is ever laid out. The fade is entrance-only.
+                  Every category is 5 or 4 services over a 3-column grid — two
+                  rows either way — so the panel does not change height. */}
+              <motion.div
+                key={activeCategory.slug}
+                initial={prefersReduced ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: DUR.fast, ease: EASE.out }}
+                className="grid grid-cols-12 gap-8 py-10"
+              >
                 <div className="col-span-3">
                   <p className="text-eyebrow text-brand-700 uppercase">
                     {activeCategory.eyebrow}
@@ -248,7 +292,7 @@ export function HeaderClient({ nav, categories }: HeaderClientProps) {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </motion.div>
             </Container>
           </motion.div>
         )}
@@ -268,7 +312,9 @@ export function HeaderClient({ nav, categories }: HeaderClientProps) {
             <Container className="pt-6 pb-16">
               <ul className="divide-hair divide-y">
                 {nav.map((item, index) => {
-                  const category = categories.find((c) => c.slug === item.categorySlug);
+                  const category = categories.find(
+                    (c) => c.slug === item.categorySlug,
+                  );
 
                   return (
                     <motion.li
@@ -298,7 +344,10 @@ export function HeaderClient({ nav, categories }: HeaderClientProps) {
                                 href={`/${category.slug}/${service.slug}`}
                                 className="text-muted hover:text-brand-700 flex min-h-11 items-center gap-2.5 text-[0.9375rem]"
                               >
-                                <span className="bg-brand-300 h-px w-4 shrink-0" aria-hidden />
+                                <span
+                                  className="bg-brand-300 h-px w-4 shrink-0"
+                                  aria-hidden
+                                />
                                 {service.navTitle ?? service.title}
                               </Link>
                             </li>

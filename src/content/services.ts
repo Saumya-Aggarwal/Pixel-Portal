@@ -113,7 +113,11 @@ const digitalMarketing: Service[] = [
         heading: "What operating this way tends to produce",
         items: [
           { value: 3, suffix: "x", label: "Median engagement rate lift" },
-          { value: 62, suffix: "%", label: "Reduction in cost per qualified follow" },
+          {
+            value: 62,
+            suffix: "%",
+            label: "Reduction in cost per qualified follow",
+          },
           { value: 18, label: "Months of average retained partnership" },
           { value: 40, suffix: "+", label: "Assets shipped per month" },
         ],
@@ -170,11 +174,23 @@ const digitalMarketing: Service[] = [
         heading: "How this differs from a standard retainer",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Positioning work before the first post", ours: true, theirs: false },
-          { label: "Named team rather than a rotating pool", ours: true, theirs: false },
+          {
+            label: "Positioning work before the first post",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Named team rather than a rotating pool",
+            ours: true,
+            theirs: false,
+          },
           { label: "Response SLAs in the contract", ours: true, theirs: false },
           { label: "Monthly performance reporting", ours: true, theirs: true },
-          { label: "Source files handed over on request", ours: true, theirs: false },
+          {
+            label: "Source files handed over on request",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
       {
@@ -213,11 +229,7 @@ const digitalMarketing: Service[] = [
       "Landing page conversion support",
       "Weekly performance reporting",
     ],
-    visual: {
-      kind: "funnel",
-      stages: ["Impressions", "Clicks", "Landing page", "Leads", "Revenue"],
-      callouts: ["Bid strategy", "Creative test", "Audience fit", "Negative keywords"],
-    },
+    visual: { kind: "ads-funnel" },
     sections: [
       {
         type: "pillars",
@@ -299,11 +311,23 @@ const digitalMarketing: Service[] = [
         heading: "How this differs from a standard media retainer",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Media spend billed at cost, no markup", ours: true, theirs: false },
+          {
+            label: "Media spend billed at cost, no markup",
+            ours: true,
+            theirs: false,
+          },
           { label: "Ad accounts owned by you", ours: true, theirs: false },
-          { label: "Losing creative tests reported", ours: true, theirs: false },
+          {
+            label: "Losing creative tests reported",
+            ours: true,
+            theirs: false,
+          },
           { label: "Weekly performance reporting", ours: true, theirs: true },
-          { label: "Attribution model agreed up front", ours: true, theirs: false },
+          {
+            label: "Attribution model agreed up front",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -324,11 +348,7 @@ const digitalMarketing: Service[] = [
       "On-page and schema optimization",
       "Content gap and keyword mapping",
     ],
-    visual: {
-      kind: "funnel",
-      stages: ["Crawled", "Indexed", "Ranking", "Clicked", "Converted"],
-      callouts: ["Crawl budget", "Core Web Vitals", "Schema", "Internal links"],
-    },
+    visual: { kind: "crawl-graph" },
     sections: [
       {
         type: "pillars",
@@ -410,9 +430,21 @@ const digitalMarketing: Service[] = [
         heading: "How this differs from a standard SEO retainer",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Findings tied to affected URL counts", ours: true, theirs: false },
-          { label: "Engineering tickets written for each fix", ours: true, theirs: false },
-          { label: "Core Web Vitals treated as in scope", ours: true, theirs: false },
+          {
+            label: "Findings tied to affected URL counts",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Engineering tickets written for each fix",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Core Web Vitals treated as in scope",
+            ours: true,
+            theirs: false,
+          },
           { label: "Monthly ranking report", ours: true, theirs: true },
           { label: "Declines paid link schemes", ours: true, theirs: false },
         ],
@@ -435,22 +467,7 @@ const digitalMarketing: Service[] = [
       "Deliverability and domain warm-up",
       "A/B testing programme",
     ],
-    visual: {
-      kind: "beams",
-      left: [
-        { label: "New subscribers" },
-        { label: "Active buyers" },
-        { label: "Lapsed 90 days" },
-        { label: "Cart abandoners" },
-        { label: "High value" },
-      ],
-      right: [
-        { label: "Welcome series" },
-        { label: "Post-purchase" },
-        { label: "Win-back" },
-        { label: "Browse abandon" },
-      ],
-    },
+    visual: { kind: "email-flow" },
     sections: [
       {
         type: "pillars",
@@ -532,11 +549,23 @@ const digitalMarketing: Service[] = [
         heading: "How this differs from a standard email retainer",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Authentication set up before first send", ours: true, theirs: false },
-          { label: "Rendering tested beyond Gmail web", ours: true, theirs: false },
+          {
+            label: "Authentication set up before first send",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Rendering tested beyond Gmail web",
+            ours: true,
+            theirs: false,
+          },
           { label: "Suppression rules documented", ours: true, theirs: false },
           { label: "Campaign performance reporting", ours: true, theirs: true },
-          { label: "Declines to send to purchased lists", ours: true, theirs: false },
+          {
+            label: "Declines to send to purchased lists",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -641,11 +670,27 @@ const digitalMarketing: Service[] = [
         heading: "How this differs from a standard analytics setup",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Written event taxonomy before build", ours: true, theirs: false },
-          { label: "Consent state respected at collection", ours: true, theirs: false },
-          { label: "Server-side collection available", ours: true, theirs: false },
+          {
+            label: "Written event taxonomy before build",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Consent state respected at collection",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Server-side collection available",
+            ours: true,
+            theirs: false,
+          },
           { label: "Reporting dashboard delivered", ours: true, theirs: true },
-          { label: "Estimates labelled as estimates", ours: true, theirs: false },
+          {
+            label: "Estimates labelled as estimates",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -669,7 +714,7 @@ const websiteDevelopment: Service[] = [
       "CMS-backed editing for marketing",
       "Analytics and SEO foundations",
     ],
-    visual: { kind: "page-assembly" },
+    visual: { kind: "layered-planes" },
     sections: [
       {
         type: "pillars",
@@ -751,9 +796,21 @@ const websiteDevelopment: Service[] = [
         heading: "How this differs from a standard website project",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Content model agreed before design starts", ours: true, theirs: false },
-          { label: "Marketing can add pages unaided", ours: true, theirs: false },
-          { label: "Redirect map delivered at launch", ours: true, theirs: false },
+          {
+            label: "Content model agreed before design starts",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Marketing can add pages unaided",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Redirect map delivered at launch",
+            ours: true,
+            theirs: false,
+          },
           { label: "Responsive build", ours: true, theirs: true },
           { label: "Repository transferred to you", ours: true, theirs: false },
         ],
@@ -862,7 +919,11 @@ const websiteDevelopment: Service[] = [
           { label: "Payment failure paths tested", ours: true, theirs: false },
           { label: "Rollback plan rehearsed", ours: true, theirs: false },
           { label: "Responsive storefront", ours: true, theirs: true },
-          { label: "On-call cover through launch week", ours: true, theirs: false },
+          {
+            label: "On-call cover through launch week",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -883,21 +944,7 @@ const websiteDevelopment: Service[] = [
       "Moderation and trust tooling",
       "Payout and commission logic",
     ],
-    visual: {
-      kind: "beams",
-      left: [
-        { label: "Vendors" },
-        { label: "Listings" },
-        { label: "Inventory feeds" },
-        { label: "Media assets" },
-      ],
-      right: [
-        { label: "Faceted search" },
-        { label: "Bookings" },
-        { label: "Reviews" },
-        { label: "Payouts" },
-      ],
-    },
+    visual: { kind: "marketplace-bridge" },
     sections: [
       {
         type: "pillars",
@@ -979,11 +1026,27 @@ const websiteDevelopment: Service[] = [
         heading: "How this differs from a standard platform build",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Data model reviewed for future scale", ours: true, theirs: false },
-          { label: "Search tested at target catalogue size", ours: true, theirs: false },
-          { label: "Moderation tooling in initial scope", ours: true, theirs: false },
+          {
+            label: "Data model reviewed for future scale",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Search tested at target catalogue size",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Moderation tooling in initial scope",
+            ours: true,
+            theirs: false,
+          },
           { label: "Vendor onboarding flow", ours: true, theirs: true },
-          { label: "Payout reconciliation built in", ours: true, theirs: false },
+          {
+            label: "Payout reconciliation built in",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -1004,16 +1067,7 @@ const websiteDevelopment: Service[] = [
       "Design system in React",
       "CI/CD on Vercel with preview environments",
     ],
-    visual: {
-      kind: "stack",
-      layers: [
-        "Headless CMS",
-        "Content API",
-        "Next.js App Router",
-        "Edge cache",
-        "CI/CD on Vercel",
-      ],
-    },
+    visual: { kind: "headless-seam" },
     sections: [
       {
         type: "pillars",
@@ -1095,11 +1149,27 @@ const websiteDevelopment: Service[] = [
         heading: "How this differs from a standard headless build",
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
-          { label: "Rendering strategy documented per route", ours: true, theirs: false },
-          { label: "Performance budget enforced in CI", ours: true, theirs: false },
-          { label: "Typed content schema end to end", ours: true, theirs: false },
+          {
+            label: "Rendering strategy documented per route",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Performance budget enforced in CI",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Typed content schema end to end",
+            ours: true,
+            theirs: false,
+          },
           { label: "Responsive build", ours: true, theirs: true },
-          { label: "Architecture runbook at handover", ours: true, theirs: false },
+          {
+            label: "Architecture runbook at handover",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -1120,17 +1190,7 @@ const websiteDevelopment: Service[] = [
       "Custom CSS refactor",
       "Accessibility conformance pass",
     ],
-    visual: {
-      kind: "orbit",
-      nodes: [
-        "Phones, 320–430px",
-        "Tablets",
-        "Foldables",
-        "Desktop",
-        "Assistive technology",
-        "Slow networks",
-      ],
-    },
+    visual: { kind: "breakpoint-ruler" },
     sections: [
       {
         type: "pillars",
@@ -1213,10 +1273,18 @@ const websiteDevelopment: Service[] = [
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
           { label: "Tested on real devices", ours: true, theirs: false },
-          { label: "Accessibility included as standard", ours: true, theirs: false },
+          {
+            label: "Accessibility included as standard",
+            ours: true,
+            theirs: false,
+          },
           { label: "Fixes made at component level", ours: true, theirs: false },
           { label: "Responsive audit report", ours: true, theirs: true },
-          { label: "Reduced-motion preference honoured", ours: true, theirs: false },
+          {
+            label: "Reduced-motion preference honoured",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -1239,16 +1307,7 @@ const softwareDevelopment: Service[] = [
       "Role-based access and auth",
       "Handover documentation and training",
     ],
-    visual: {
-      kind: "stack",
-      layers: [
-        "Client interface",
-        "Application layer",
-        "Domain logic",
-        "Data model",
-        "Integrations",
-      ],
-    },
+    visual: { kind: "app-shell" },
     sections: [
       {
         type: "pillars",
@@ -1331,8 +1390,16 @@ const softwareDevelopment: Service[] = [
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
           { label: "Repository in your accounts", ours: true, theirs: false },
-          { label: "Architecture decisions documented", ours: true, theirs: false },
-          { label: "Test suite covering critical paths", ours: true, theirs: false },
+          {
+            label: "Architecture decisions documented",
+            ours: true,
+            theirs: false,
+          },
+          {
+            label: "Test suite covering critical paths",
+            ours: true,
+            theirs: false,
+          },
           { label: "Iterative delivery", ours: true, theirs: true },
           { label: "No lock-in to agency tooling", ours: true, theirs: false },
         ],
@@ -1355,18 +1422,7 @@ const softwareDevelopment: Service[] = [
       "Alerting and anomaly detection",
       "Scheduled reporting exports",
     ],
-    visual: {
-      kind: "dashboard",
-      panels: ["Ad platforms", "Analytics", "CRM", "Warehouse"],
-      // TODO(content): illustrative figures describing a typical build, not
-      // measured results. Replace with real numbers or retire the block.
-      kpis: [
-        { value: 12, label: "Platforms ingested" },
-        { value: 40, suffix: "+", label: "Scheduled reports" },
-        { value: 15, label: "Minute refresh interval" },
-        { value: 3, label: "Years of history retained" },
-      ],
-    },
+    visual: { kind: "pipeline-stair" },
     sections: [
       {
         type: "pillars",
@@ -1448,11 +1504,19 @@ const softwareDevelopment: Service[] = [
         heading: "How this differs from an off-the-shelf reporting tool",
         columns: ["Pixel Portal", "Off-the-shelf tool"],
         rows: [
-          { label: "Metric definitions version-controlled", ours: true, theirs: false },
+          {
+            label: "Metric definitions version-controlled",
+            ours: true,
+            theirs: false,
+          },
           { label: "Pipeline failure alerting", ours: true, theirs: false },
           { label: "Backfill procedure tested", ours: true, theirs: false },
           { label: "Scheduled reporting", ours: true, theirs: true },
-          { label: "Warehouse hosted in your account", ours: true, theirs: false },
+          {
+            label: "Warehouse hosted in your account",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -1473,21 +1537,7 @@ const softwareDevelopment: Service[] = [
       "Missing asset recovery",
       "Post-migration integrity verification",
     ],
-    visual: {
-      kind: "beams",
-      left: [
-        { label: "Legacy database" },
-        { label: "CMS exports" },
-        { label: "Media library" },
-        { label: "Spreadsheets" },
-      ],
-      right: [
-        { label: "New schema" },
-        { label: "Asset store" },
-        { label: "Redirect map" },
-        { label: "Audit log" },
-      ],
-    },
+    visual: { kind: "table-transfer" },
     sections: [
       {
         type: "pillars",
@@ -1573,7 +1623,11 @@ const softwareDevelopment: Service[] = [
           { label: "Dry run diffed before cutover", ours: true, theirs: false },
           { label: "Rollback rehearsed", ours: true, theirs: false },
           { label: "Migration report delivered", ours: true, theirs: true },
-          { label: "Checksums reconciled post-migration", ours: true, theirs: false },
+          {
+            label: "Checksums reconciled post-migration",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
@@ -1677,10 +1731,18 @@ const softwareDevelopment: Service[] = [
         columns: ["Pixel Portal", "Typical agency"],
         rows: [
           { label: "Idempotent writes", ours: true, theirs: false },
-          { label: "Dead-letter queue for failed messages", ours: true, theirs: false },
+          {
+            label: "Dead-letter queue for failed messages",
+            ours: true,
+            theirs: false,
+          },
           { label: "Per-sync audit log", ours: true, theirs: false },
           { label: "Connector documentation", ours: true, theirs: true },
-          { label: "Credentials held in your secret store", ours: true, theirs: false },
+          {
+            label: "Credentials held in your secret store",
+            ours: true,
+            theirs: false,
+          },
         ],
       },
     ],
