@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
+import { BootProvider } from "@/components/boot/BootProvider";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { ScrollProvider } from "@/components/motion/ScrollProvider";
@@ -78,28 +79,41 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           reader without JS should still get the page, so force those elements
           visible when scripting is off.
 
-          The hero's boot sequence needs two more rules. It server-renders in
-          its first phase, so without hydration to advance it the brand tile
-          would sit pinned over the page forever and the 3D core would never
-          leave the middle of the screen. Drop the tile and return the core to
-          the column — the same end state the sequence would have reached.
+          The boot sequence needs two more rules. Its curtain server-renders in
+          its first phase, so without hydration to advance it that opaque
+          full-screen panel would cover the site permanently, and the 3D core
+          would never leave the middle of the viewport. Drop the curtain and
+          return the core to the column — the same end state the sequence would
+          have reached.
         */}
         <noscript>
           <style>{`[style*="opacity:0"]{opacity:1!important;transform:none!important}
-[data-boot="overlay"]{display:none!important}
+[data-boot="curtain"]{display:none!important}
 [data-boot="core"]{position:relative!important;inset:auto!important;margin:0!important;width:100%!important;z-index:auto!important}`}</style>
         </noscript>
       </head>
       <body className="flex min-h-full flex-col bg-white">
-        <ScrollProvider>
-          <Header />
-          {/* Offsets the fixed header. Pages that want the hero to run under
-              the header opt out with a negative margin of their own. */}
-          <main id="main" className="flex-1 pt-18 lg:pt-20">
-            {children}
-          </main>
-          <Footer />
-        </ScrollProvider>
+        {/*
+          Outside `template.tsx`, and that placement is load-bearing rather than
+          tidy. `RouteTransition` fades every route up from `opacity: 0`, so a
+          curtain rendered within it would fade in along with the page it is
+          meant to be covering — a flash of white before the dark field, which
+          is the one frame the whole sequence exists to prevent.
+
+          It wraps rather than follows `ScrollProvider` so the phase is in scope
+          for the hero, which reads it to know when to resolve.
+        */}
+        <BootProvider>
+          <ScrollProvider>
+            <Header />
+            {/* Offsets the fixed header. Pages that want the hero to run under
+                the header opt out with a negative margin of their own. */}
+            <main id="main" className="flex-1 pt-18 lg:pt-20">
+              {children}
+            </main>
+            <Footer />
+          </ScrollProvider>
+        </BootProvider>
       </body>
     </html>
   );

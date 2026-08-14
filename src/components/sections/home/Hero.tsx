@@ -1,10 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { useCallback } from "react";
 
-import { LOGO_SIZE, LOGO_SRC } from "@/components/layout/Logo";
+import { useBoot } from "@/components/boot/BootProvider";
 import { Frame, initials } from "@/components/media/Frame";
 import { SplineScene } from "@/components/media/SplineScene";
 import { CascadeText } from "@/components/motion/CascadeText";
@@ -15,7 +14,6 @@ import { site } from "@/content/site";
 import { cn } from "@/lib/cn";
 import { DUR, EASE } from "@/lib/motion";
 import type { TeamMember } from "@/types/content";
-import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const SPLINE_SCENE = "https://prod.spline.design/NbU6scJvWHLpfXhs/scene.splinecode";
 
@@ -55,23 +53,11 @@ const headlineWords = [
 ];
 
 /* ==========================================================================
-   The boot sequence
+   The hand-off from the boot sequence
    ========================================================================== */
 
 /**
- * Three beats, not two: the brand tile lands first, hands off to the 3D core,
- * and only then does the layout resolve. Both values are measured from mount,
- * so the core holds centre for `complete - cube` = 1500ms.
- */
-type BootPhase = "logo" | "cube-center" | "complete";
-
-const PHASE_MS = { cube: 1200, complete: 2700 } as const;
-
-/** Seconds from mount to the resolve — the origin for the reveal ladder. */
-const BOOT = PHASE_MS.complete / 1000;
-
-/**
- * The one spring the resolve is choreographed to. The cube's glide and its
+ * The one spring the resolve is choreographed to. The core's glide and its
  * scale settle share it, so the two land on the same frame instead of drifting
  * apart at the tail.
  */
@@ -83,16 +69,20 @@ const RESOLVE = { type: "spring", bounce: 0.15, duration: 1.2 } as const;
  */
 const CORE_IN = { type: "spring", bounce: 0.3, duration: 1.1, delay: 0.18 } as const;
 
-/** The brand tile's own fade — a plain tween; springing a logo reads cheap. */
-const LOGO_IN = { duration: 0.7, ease: EASE.out } as const;
-const LOGO_OUT = { duration: 0.4, ease: EASE.inOut } as const;
-
 /**
- * Entrance ladder, now measured from the moment the boot ends rather than from
- * mount. Everything in the hero animates on load rather than on scroll — it is
- * already in view — so the order stays a hand-tuned delay sequence: headline
- * cascades first as the cube begins its glide, then the supporting copy, then
- * the stat cards last, arriving as the cube settles.
+ * Entrance ladder, measured from the moment the boot resolves. Everything in
+ * the hero animates on load rather than on scroll — it is already in view — so
+ * the order stays a hand-tuned delay sequence: headline cascades first as the
+ * core begins its glide, then the supporting copy, then the stat cards last,
+ * arriving as the core settles.
+ *
+ * These used to carry the boot's duration baked into them, because
+ * `CascadeText`, `FloatingCard` and `CountUp` all start their clocks at mount
+ * and take a delay rather than a trigger. That arithmetic cannot survive a boot
+ * whose length depends on how fast the page actually loads, so the two
+ * subtrees below are keyed on the resolve instead: they remount when it lands,
+ * which restarts those clocks at the only moment that matters. The delays are
+ * relative to the resolve again, and there is no duration to keep in sync.
  */
 const DELAY = {
   headline: 0.06,
@@ -115,106 +105,62 @@ interface HeroProps {
  * against a bare Spline 3D scene, with two overlapping stat cards stacked
  * under the scene in the right-hand column.
  *
- * It opens on a three-phase boot rather than dropping straight into that
- * layout: the brand tile lands on bare white, the 3D core scales up dead-centre
- * of the viewport, and at `PHASE_MS.complete` the core glides to its resting
- * place in the right column while the left side cascades in behind it.
+ * It does not drop straight into that layout on a first visit. `BootProvider`
+ * runs a title card over the whole viewport first and hands this component its
+ * phase; the hero's job is only the last two beats of it — the core rising at
+ * centre once the portal has opened, then gliding to its resting place in the
+ * right column while the left side cascades in behind it.
  *
- * There is deliberately no `<Preloader />`. The core is one `<Spline>` that
- * never unmounts — a WebGL context torn down and rebuilt costs a white flash
- * and a second scene download, so the transition is a Motion `layout`
- * animation on its wrapper instead: `fixed`-and-centred becomes `relative`-in-
- * column, and Motion interpolates between the two measured boxes.
+ * There is deliberately no `<Preloader />` swapping one scene for another. The
+ * core is one `<Spline>` that never unmounts — a WebGL context torn down and
+ * rebuilt costs a white flash and a second scene download, so the transition is
+ * a Motion `layout` animation on its wrapper instead: `fixed`-and-centred
+ * becomes `relative`-in-column, and Motion interpolates between the two
+ * measured boxes. It also means the scene streams in behind the curtain, so by
+ * the time the portal opens there is an object there rather than a glow.
  *
  * Negative top margin pulls the section under the fixed header, then matching
  * padding restores the safe area; the header floats over white here instead
  * of sitting on a seam.
  */
 export function Hero({ specialists }: HeroProps) {
-  const prefersReduced = useReducedMotion();
-  const [rawPhase, setRawPhase] = useState<BootPhase>("logo");
+  // Reduced motion is not consulted here any more. `BootProvider` resolves the
+  // phase to "complete" for such a reader before this renders, and every
+  // primitive below already handles the setting itself — a second check here
+  // would be a third place for the three of them to disagree.
+  const { phase, intro, markReady } = useBoot();
 
-  useEffect(() => {
-    const toCube = window.setTimeout(() => setRawPhase("cube-center"), PHASE_MS.cube);
-    const toDone = window.setTimeout(() => setRawPhase("complete"), PHASE_MS.complete);
-    return () => {
-      window.clearTimeout(toCube);
-      window.clearTimeout(toDone);
-    };
-  }, []);
-
-  /**
-   * Derived rather than a second piece of state kept in sync by an effect.
-   *
-   * A 2.7s hold on an inert screen is exactly the kind of thing the reduced
-   * motion setting is for, so a reader who asked for less skips straight to the
-   * resolved layout. `useReducedMotion` reports `false` through hydration and
-   * the real value on the tick after — deliberately, so the server and client
-   * trees match — which means such a reader may see the boot's first frame
-   * before it resolves. One frame is the price of the page hydrating at all.
-   */
-  const phase: BootPhase = prefersReduced ? "complete" : rawPhase;
   const isResolved = phase === "complete";
-  /** The core keeps one centred box across both pre-resolve phases, so the
-   *  `layout` animation fires once — on the hand-off to the column, not on
-   *  the hand-off from the logo. */
+  /** The core keeps one centred box across every pre-resolve phase, so the
+   *  `layout` animation fires exactly once — on the hand-off to the column. */
   const isCentred = !isResolved;
+  /** Held at zero behind the curtain: its entrance should be the first thing
+   *  through the portal, not something that already happened out of sight. */
+  const coreVisible = phase === "core" || isResolved;
 
   /**
-   * `CascadeText`, `FloatingCard`, and `CountUp` all start their own clocks at
-   * mount and take a delay, not a trigger — so their delays are offset by the
-   * boot duration to land on the same beat as the state-driven reveals below.
+   * Stable, because `SplineScene` reports the reduced-motion case from an
+   * effect that lists this in its dependencies — an inline arrow would re-run
+   * it on every render of the hero.
    */
-  const reveal = prefersReduced ? 0 : BOOT;
+  const onSceneReady = useCallback(() => markReady("scene"), [markReady]);
 
   return (
     <section className="relative -mt-18 overflow-hidden bg-white pt-18 lg:-mt-20 lg:pt-20">
-      {/* ---- Phase 1: the brand tile, alone on white ----
-
-          It sits above the grid and the core (both still at zero) and below
-          the header, and it leaves via `AnimatePresence` so its fade-out
-          overlaps the grid drawing itself in — the hand-off is a cross-fade,
-          not a cut. */}
-      <AnimatePresence>
-        {phase === "logo" && (
-          <motion.div
-            key="boot-logo"
-            aria-hidden
-            // Hooked by the no-JS backstop in the root layout: this phase is
-            // server-rendered, so without hydration to retire it the tile
-            // would sit over the page permanently.
-            data-boot="overlay"
-            className="pointer-events-none fixed inset-0 z-40 m-auto flex h-52 w-52 items-center justify-center"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            // The exit tween rides on the exit target, not on `transition` —
-            // Motion has no nested `exit` key there.
-            exit={{ opacity: 0, scale: 0.98, transition: LOGO_OUT }}
-            transition={LOGO_IN}
-          >
-            <Image
-              src={LOGO_SRC}
-              alt=""
-              width={LOGO_SIZE}
-              height={LOGO_SIZE}
-              priority
-              className="h-full w-full rounded-[1.6rem] object-contain"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ---- Ground: faint grid, then two green blooms sitting under it ----
 
-          Phase 2 opens here. The grid stays at zero for the whole logo beat —
-          the tile is meant to land on bare white — then draws in over 500ms
-          and eases back to its resting 0.7 once the layout resolves and it
-          stops being the only thing to look at. */}
+          Zero for as long as the curtain is up, then drawn in over 500ms as
+          that curtain fades — so the grid appears to be what the portal opened
+          onto — and eased back to its resting 0.7 once the layout resolves and
+          it stops being the only thing to look at.
+
+          It is the same 72px field the curtain carries, at the same origin, so
+          the two are in register across the hand-off. */}
       <motion.div
         aria-hidden
         className="grid-field pointer-events-none absolute inset-0"
         initial={{ opacity: 0 }}
-        animate={{ opacity: phase === "logo" ? 0 : isResolved ? 0.7 : 1 }}
+        animate={{ opacity: coreVisible ? (isResolved ? 0.7 : 1) : 0 }}
         transition={{ duration: 0.5, ease: EASE.out }}
       />
 
@@ -234,8 +180,15 @@ export function Hero({ specialists }: HeroProps) {
 
       <Container wide className="relative">
         <div className="grid grid-cols-1 gap-y-16 pt-14 pb-24 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-x-12 lg:pt-20 lg:pb-28">
-          {/* ================= Left: the statement ================= */}
-          <div>
+          {/* ================= Left: the statement =================
+
+              Keyed on the resolve, which remounts everything below it at the
+              instant the boot lands. `CascadeText` reads its `delay` at mount,
+              so this is what lets the word cascade be timed against the resolve
+              rather than against a boot duration the hero can no longer know.
+              The outer gates still hold the column at `HIDDEN` until then; the
+              key retimes, the gate hides, and they are separate jobs. */}
+          <div key={isResolved ? "revealed" : "pending"}>
             <motion.div
               initial={HIDDEN}
               animate={isResolved ? SHOWN : HIDDEN}
@@ -244,7 +197,7 @@ export function Hero({ specialists }: HeroProps) {
               <CascadeText
                 as="h1"
                 words={headlineWords}
-                delay={reveal + DELAY.headline}
+                delay={DELAY.headline}
                 className="font-display text-ink max-w-[13ch] text-6xl leading-[1.1] font-extrabold tracking-[-0.035em] sm:text-7xl lg:text-8xl"
               />
             </motion.div>
@@ -303,17 +256,23 @@ export function Hero({ specialists }: HeroProps) {
                   pulls the cards up without touching the object. Trim too far
                   and it starts cutting into the object's bottom edge. */}
             <motion.div
-              layout
+              // Only when the intro is actually playing. Without the gate, a
+              // repeat visit resolves the phase in the reconciliation right
+              // after hydration — one commit measured at screen centre, the
+              // next in this column — and Motion would fly the core across the
+              // page on what should be an ordinary load.
+              layout={intro}
               transition={RESOLVE}
               data-boot="core"
               className={cn(
                 "bg-transparent",
                 isCentred
-                  ? // Phases 1–2. `fixed` rather than `absolute`: the brief is
-                    // dead-centre of the *screen*, and this section is taller
-                    // than the viewport, so centring inside it would put the
-                    // core well below the fold. Nothing here is interactive
-                    // and the header sits at z-50, so it stays clear of both.
+                  ? // Every beat before the resolve. `fixed` rather than
+                    // `absolute`: the brief is dead-centre of the *screen*, and
+                    // this section is taller than the viewport, so centring
+                    // inside it would put the core well below the fold. Nothing
+                    // here is interactive and the header sits at z-50, so it
+                    // stays clear of both.
                     // `h-125` with no `lg:` override on purpose: the resting
                     // box is 500px tall at every width, because its `min-h-125`
                     // outranks its own `lg:h-110`. Matching that exactly keeps
@@ -323,17 +282,19 @@ export function Hero({ specialists }: HeroProps) {
                   : "relative min-h-125 w-full lg:h-110",
               )}
             >
-              {/* Hidden outright for the logo beat rather than unmounted: the
-                  scene keeps streaming in behind the tile, so by the time it
-                  is uncovered there is an object there instead of a glow. */}
+              {/* Hidden outright while the curtain is up rather than
+                  unmounted: the scene streams in behind it, so the object is
+                  already loaded and turning when the portal opens — and its
+                  `onLoad` is one of the three signals the counter is waiting
+                  on, which it could not be if this were mounted late. */}
               <motion.div
                 className="relative h-full w-full"
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{
-                  opacity: phase === "logo" ? 0 : 1,
-                  scale: phase === "logo" ? 0.7 : isResolved ? 1 : 1.2,
+                  opacity: coreVisible ? 1 : 0,
+                  scale: !coreVisible ? 0.7 : isResolved ? 1 : 1.2,
                 }}
-                transition={phase === "cube-center" ? CORE_IN : RESOLVE}
+                transition={phase === "core" ? CORE_IN : RESOLVE}
               >
                 <div className="absolute inset-x-0 top-0 h-full overflow-hidden lg:h-152 lg:-translate-y-30">
                   <SplineScene
@@ -341,6 +302,7 @@ export function Hero({ specialists }: HeroProps) {
                     label="Rotating abstract 3D form"
                     className="absolute inset-x-0 top-0 h-[calc(100%+5rem)]"
                     canvasClassName={SPLINE_FILTER}
+                    onReady={onSceneReady}
                   />
                 </div>
               </motion.div>
@@ -352,20 +314,33 @@ export function Hero({ specialists }: HeroProps) {
                 which the second card would overflow it. Every width beneath
                 that stacks them instead.
 
-                While the core is centred (phases 1–2) this cluster sits alone at the top of
+                While the core is centred this cluster sits alone at the top of
                 the column, because a `fixed` core is out of flow. It is still
                 fully transparent at that point, and it is back in place before
-                its own entrance begins. */}
-            <div className="mt-8 flex max-w-sm flex-col gap-5 xl:mt-10 xl:max-w-none xl:flex-row xl:items-start xl:gap-0">
+                its own entrance begins.
+
+                Keyed on the resolve for the same reason the left column is:
+                `FloatingCard` and `CountUp` both start at mount. Unlike that
+                column these cards carry no gate of their own — their entrance
+                *is* `FloatingCard`'s — so the pre-resolve mount is held at zero
+                here. Nested opacity multiplies, so once this clears the cards
+                are still at their own zero and their delays run untouched. */}
+            <div
+              key={isResolved ? "revealed" : "pending"}
+              className={cn(
+                "mt-8 flex max-w-sm flex-col gap-5 xl:mt-10 xl:max-w-none xl:flex-row xl:items-start xl:gap-0",
+                !isResolved && "opacity-0",
+              )}
+            >
               <div className="xl:w-72 xl:shrink-0 2xl:w-76">
                 <FloatingCard
-                  delay={reveal + DELAY.statOne}
+                  delay={DELAY.statOne}
                   tilt={4}
                   lift={5}
                   className={`${GLASS} p-6`}
                 >
                   <p className="font-display text-ink text-4xl leading-none font-extrabold tracking-tight">
-                    <CountUp value={240} suffix="+" delay={reveal + DELAY.statOne + 0.2} />
+                    <CountUp value={240} suffix="+" delay={DELAY.statOne + 0.2} />
                   </p>
                   <p className="font-display text-ink-soft mt-3 text-[0.9375rem] leading-snug">
                     Projects delivered across 18 countries since {site.founded}.
@@ -381,7 +356,7 @@ export function Hero({ specialists }: HeroProps) {
                       animate={{ width: "68%" }}
                       transition={{
                         duration: DUR.reveal,
-                        delay: reveal + DELAY.statOne + 0.4,
+                        delay: DELAY.statOne + 0.4,
                         ease: EASE.out,
                       }}
                     />
@@ -391,7 +366,7 @@ export function Hero({ specialists }: HeroProps) {
 
               <div className="xl:relative xl:z-10 xl:-ml-6 xl:mt-20 xl:w-72 xl:shrink-0 2xl:w-76">
                 <FloatingCard
-                  delay={reveal + DELAY.statTwo}
+                  delay={DELAY.statTwo}
                   floatDuration={4.6}
                   tilt={4}
                   lift={5}
@@ -401,7 +376,7 @@ export function Hero({ specialists }: HeroProps) {
                     <CountUp
                       value={site.teamSize}
                       suffix="+"
-                      delay={reveal + DELAY.statTwo + 0.2}
+                      delay={DELAY.statTwo + 0.2}
                     />
                   </p>
                   <p className="font-display text-ink-soft mt-3 text-[0.9375rem] leading-snug">

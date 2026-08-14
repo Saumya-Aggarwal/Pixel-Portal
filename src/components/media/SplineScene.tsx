@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { GlowPulse } from "@/components/motion/GlowPulse";
 import { cn } from "@/lib/cn";
@@ -38,6 +38,16 @@ interface SplineSceneProps {
    * brand green and would come out lime.
    */
   canvasClassName?: string;
+  /**
+   * Fires once the scene has finished streaming and the first frame is on the
+   * canvas — or immediately, under reduced motion, where the runtime is never
+   * fetched at all and there is nothing to wait for.
+   *
+   * Exists so the boot sequence can hold its counter against the genuinely
+   * slowest thing on the page instead of a made-up timer. A caller that does
+   * not pass it pays nothing.
+   */
+  onReady?: () => void;
 }
 
 /**
@@ -57,9 +67,22 @@ interface SplineSceneProps {
  * that first pass never commits, and `next/dynamic` never triggers its import.
  * Verified: zero requests to prod.spline.design with the setting on.
  */
-export function SplineScene({ scene, label, className, canvasClassName }: SplineSceneProps) {
+export function SplineScene({
+  scene,
+  label,
+  className,
+  canvasClassName,
+  onReady,
+}: SplineSceneProps) {
   const prefersReduced = useReducedMotion();
   const [loaded, setLoaded] = useState(false);
+
+  // Announced from an effect rather than from the early return below, because
+  // that return is render and this is a side effect on a caller's state.
+  // Callers pass a stable callback, so this settles after one run.
+  useEffect(() => {
+    if (prefersReduced) onReady?.();
+  }, [prefersReduced, onReady]);
 
   if (prefersReduced) {
     return (
@@ -89,7 +112,13 @@ export function SplineScene({ scene, label, className, canvasClassName }: Spline
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: 0.9, ease: EASE.out }}
       >
-        <Spline scene={scene} onLoad={() => setLoaded(true)} />
+        <Spline
+          scene={scene}
+          onLoad={() => {
+            setLoaded(true);
+            onReady?.();
+          }}
+        />
       </motion.div>
     </div>
   );
