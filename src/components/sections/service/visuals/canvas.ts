@@ -11,6 +11,30 @@
  * review, which is most of what makes these auditable.
  */
 
+/**
+ * Helpers bound to a canvas of a given size.
+ *
+ * The service depictions all share one 960x640 canvas, so they import the
+ * pre-bound helpers below. The category heroes are drawn on a wider 1440x720
+ * board — a five-station horizontal run does not fit the service aspect — and
+ * bind their own set from here.
+ *
+ * `cq` divides by width for vertical measurements too, which is correct for any
+ * canvas so long as the container carries the matching aspect ratio: v units
+ * down is `v/H` of the height, and `H = W * (H/W)`, so it reduces to `v/W` of
+ * the width either way.
+ */
+export function createCanvas(width: number, height: number) {
+  return {
+    W: width,
+    H: height,
+    px: (v: number) => `${((v / width) * 100).toFixed(3)}%`,
+    py: (v: number) => `${((v / height) * 100).toFixed(3)}%`,
+    ts: (v: number) => `max(0.625rem, ${((v / width) * 100).toFixed(3)}cqw)`,
+    cq: (v: number) => `${((v / width) * 100).toFixed(3)}cqw`,
+  };
+}
+
 /** Blueprint canvas. Every coordinate in the depictions is in this space. */
 export const W = 960;
 export const H = 640;
@@ -30,7 +54,8 @@ export const py = (v: number) => `${((v / H) * 100).toFixed(3)}%`;
  *
  * Requires an ancestor with `@container`.
  */
-export const ts = (v: number) => `max(0.625rem, ${((v / W) * 100).toFixed(3)}cqw)`;
+export const ts = (v: number) =>
+  `max(0.625rem, ${((v / W) * 100).toFixed(3)}cqw)`;
 
 /**
  * Blueprint px -> container-relative length, unfloored.

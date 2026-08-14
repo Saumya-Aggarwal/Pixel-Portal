@@ -72,8 +72,8 @@ export function PageHero({
     <section
       className={
         split
-          ? "relative overflow-hidden pt-14 pb-16 lg:pt-30 lg:pb-24"
-          : "relative overflow-hidden pt-14 pb-16 lg:pt-20 lg:pb-24"
+          ? "relative overflow-hidden pt-8 pb-16 lg:pt-4 lg:pb-24"
+          : "relative overflow-hidden pt-8 pb-16 lg:pt-4 lg:pb-24"
       }
     >
       {/* The ground settles first, then the type arrives on it — the grid
@@ -115,8 +115,8 @@ export function PageHero({
         <div
           className={
             split
-              ? "mt-8 grid grid-cols-12 items-center gap-y-12 lg:gap-x-16"
-              : "mt-8 grid grid-cols-12 items-end gap-y-10"
+              ? "mt-6 grid grid-cols-12 items-center gap-y-12 lg:gap-x-16"
+              : "mt-6 grid grid-cols-12 items-end gap-y-10"
           }
         >
           <div className={split ? "col-span-12 lg:col-span-5" : "col-span-12 lg:col-span-8"}>

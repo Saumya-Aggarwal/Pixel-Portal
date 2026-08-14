@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons";
 import { LiftCard } from "@/components/motion/LiftCard";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
+import { CategoryHeroVisual } from "@/components/sections/category/CategoryHeroVisual";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
 import { ArrowGlyph } from "@/components/ui/Button";
@@ -46,7 +47,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function CategoryPage({ params }: PageProps<"/[category]">) {
+export default async function CategoryPage({
+  params,
+}: PageProps<"/[category]">) {
   const { category: slug } = await params;
   const category = await getCategory(slug);
   if (!category) notFound();
@@ -62,7 +65,9 @@ export default async function CategoryPage({ params }: PageProps<"/[category]">)
           { label: "Home", href: "/" },
           { label: category.title, href: `/${category.slug}` },
         ]}
-      />
+      >
+        <CategoryHeroVisual slug={category.slug} />
+      </PageHero>
 
       {/* ---- Sub-service grid ---- */}
       <Section spacing="base" id="services" divider>
@@ -76,7 +81,8 @@ export default async function CategoryPage({ params }: PageProps<"/[category]">)
                 as="h2"
                 className="font-display text-h2 text-ink mt-6 max-w-[16ch] font-semibold"
               >
-                {category.services.length} ways we work in {category.title.toLowerCase()}.
+                {category.services.length} ways we work in{" "}
+                {category.title.toLowerCase()}.
               </TextReveal>
             </div>
           </div>
@@ -170,7 +176,9 @@ export default async function CategoryPage({ params }: PageProps<"/[category]">)
                 <h3 className="font-display text-ink text-[1.125rem] font-semibold">
                   {item.title}
                 </h3>
-                <p className="text-muted mt-3 text-[0.9375rem] leading-relaxed">{item.body}</p>
+                <p className="text-muted mt-3 text-[0.9375rem] leading-relaxed">
+                  {item.body}
+                </p>
               </RevealItem>
             ))}
           </RevealGroup>
