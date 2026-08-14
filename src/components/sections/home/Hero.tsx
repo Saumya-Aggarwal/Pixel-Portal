@@ -57,17 +57,24 @@ const headlineWords = [
    ========================================================================== */
 
 /**
- * The one spring the resolve is choreographed to. The core's glide and its
- * scale settle share it, so the two land on the same frame instead of drifting
- * apart at the tail.
+ * The one spring the resolve is choreographed to.
+ *
+ * Three things ride it: the core's glide to the column, its scale settle, and
+ * the headline's travel in the opposite direction. Sharing a single spring is
+ * what makes the resolve read as one gesture pulling apart rather than as
+ * several elements that happen to move at the same time — they accelerate and
+ * settle together, frame for frame.
+ *
+ * Low bounce on purpose. The overshoot that flatters a small card reads as a
+ * wobble at the scale of a headline and a 500px canvas.
  */
-const RESOLVE = { type: "spring", bounce: 0.15, duration: 1.2 } as const;
+const RESOLVE = { type: "spring", bounce: 0.1, duration: 1.7 } as const;
 
 /**
  * The core's arrival: a touch more bounce than the resolve, held back a beat
  * so the grid behind it has started drawing before the object lands on it.
  */
-const CORE_IN = { type: "spring", bounce: 0.3, duration: 1.1, delay: 0.18 } as const;
+const CORE_IN = { type: "spring", bounce: 0.26, duration: 1.5, delay: 0.25 } as const;
 
 /**
  * Entrance ladder, measured from the moment the boot resolves. Everything in
@@ -85,13 +92,35 @@ const CORE_IN = { type: "spring", bounce: 0.3, duration: 1.1, delay: 0.18 } as c
  * relative to the resolve again, and there is no duration to keep in sync.
  */
 const DELAY = {
-  headline: 0.06,
-  lead: 0.3,
-  statOne: 0.46,
-  statTwo: 0.58,
+  headline: 0,
+  lead: 0.5,
+  statOne: 0.82,
+  statTwo: 1.02,
 } as const;
 
-/** Every block on the left holds this pose until `isBooting` clears. */
+/**
+ * The headline's pose while the core holds centre, and where it ends up.
+ *
+ * Not a rise like everything else below it. The headline is parked to the
+ * right — roughly under the centred core, since 40% of the left column's width
+ * is about the distance from that column's midline to the middle of the
+ * viewport — and travels *left* into place on the same spring that carries the
+ * core *right*. The two separate out of one cluster, and because the core's
+ * column paints above this one, the headline emerges from behind the object as
+ * it leaves.
+ *
+ * A percentage of the element's own width rather than a viewport unit, so the
+ * offset tracks the column it has to cross at every breakpoint instead of
+ * being tuned to one screen. And a transform rather than a layout change:
+ * nothing reflows, so the type never re-wraps mid-travel.
+ */
+// Both ends carry the same unit. Handing Motion "40%" and a bare `0` asks it to
+// interpolate across two different length systems for the one property that has
+// to stay in lockstep with the core.
+const GATHERED = { opacity: 0, x: "40%" } as const;
+const SETTLED = { opacity: 1, x: "0%" } as const;
+
+/** Every other block on the left holds this pose until the boot resolves. */
 const HIDDEN = { opacity: 0, y: 40 } as const;
 const SHOWN = { opacity: 1, y: 0 } as const;
 
@@ -161,7 +190,7 @@ export function Hero({ specialists }: HeroProps) {
         className="grid-field pointer-events-none absolute inset-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: coreVisible ? (isResolved ? 0.7 : 1) : 0 }}
-        transition={{ duration: 0.5, ease: EASE.out }}
+        transition={{ duration: 0.9, ease: EASE.out }}
       />
 
       {/* During the boot this bloom sits behind the centred core; afterwards it
@@ -190,14 +219,25 @@ export function Hero({ specialists }: HeroProps) {
               key retimes, the gate hides, and they are separate jobs. */}
           <div key={isResolved ? "revealed" : "pending"}>
             <motion.div
-              initial={HIDDEN}
-              animate={isResolved ? SHOWN : HIDDEN}
-              transition={{ duration: DUR.slow, delay: DELAY.headline, ease: EASE.out }}
+              initial={GATHERED}
+              animate={isResolved ? SETTLED : GATHERED}
+              // `x` rides RESOLVE so the headline and the core are one gesture.
+              // Opacity is broken out as a plain tween: a spring on opacity
+              // overshoots past 1 and clamps, which shows up as a flicker right
+              // at the moment the type is crossing the object it emerged from.
+              transition={{
+                ...RESOLVE,
+                opacity: { duration: 0.85, delay: 0.1, ease: EASE.out },
+              }}
             >
               <CascadeText
                 as="h1"
                 words={headlineWords}
                 delay={DELAY.headline}
+                // Slower than the house default. The cascade now has the core's
+                // full travel to play out across, so the last word lands as the
+                // object reaches its column instead of a beat before it moves.
+                stagger={0.11}
                 className="font-display text-ink max-w-[13ch] text-6xl leading-[1.1] font-extrabold tracking-[-0.035em] sm:text-7xl lg:text-8xl"
               />
             </motion.div>
@@ -205,7 +245,7 @@ export function Hero({ specialists }: HeroProps) {
             <motion.p
               initial={HIDDEN}
               animate={isResolved ? SHOWN : HIDDEN}
-              transition={{ duration: DUR.base, delay: DELAY.lead, ease: EASE.out }}
+              transition={{ duration: DUR.slow, delay: DELAY.lead, ease: EASE.out }}
               className="font-display text-lead text-muted mt-8 max-w-lg"
             >
               Demand generation, platforms, and bespoke software — designed and run by one team, so
@@ -355,8 +395,8 @@ export function Hero({ specialists }: HeroProps) {
                       initial={{ width: "0%" }}
                       animate={{ width: "68%" }}
                       transition={{
-                        duration: DUR.reveal,
-                        delay: DELAY.statOne + 0.4,
+                        duration: 1.6,
+                        delay: DELAY.statOne + 0.5,
                         ease: EASE.out,
                       }}
                     />

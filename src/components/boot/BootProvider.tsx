@@ -46,7 +46,7 @@ export const BOOT_TIMING = {
    * loader that flashes past reads as a bug; this is the floor that makes the
    * beat deliberate on a warm cache.
    */
-  floorMs: 1800,
+  floorMs: 2400,
   /**
    * …and never waits past it, however slow. The Spline scene is roughly a
    * megabyte of runtime plus geometry, so on a bad connection it is the long
@@ -54,11 +54,18 @@ export const BOOT_TIMING = {
    * core arrives late into an already-resolved page — which is a far smaller
    * failure than an intro that appears to hang.
    */
-  ceilingMs: 4200,
+  ceilingMs: 4600,
   /** The portal expansion. The plates finish well inside this; see BootCurtain. */
-  openMs: 950,
-  /** The core alone at centre, between the portal and the resolve. */
-  coreMs: 850,
+  openMs: 1250,
+  /**
+   * The core alone at centre, between the portal and the resolve.
+   *
+   * The longest single beat on purpose. Everything before it is chrome arriving;
+   * this is the one moment the object is the only thing on the screen, and it is
+   * what the portal spent a second and a half opening onto. Cutting away from it
+   * quickly wastes the build-up.
+   */
+  coreMs: 1500,
 } as const;
 
 /**
@@ -209,7 +216,10 @@ export function BootProvider({ children }: { children: ReactNode }) {
      there is the tell of a fake loader. */
   useEffect(() => {
     if (skipped || rawPhase !== "curtain") return;
-    const ramp = animate(progress, 92, { duration: 1.55, ease: [0.16, 1, 0.3, 1] });
+    // A plain ease-out, not the house expo. Expo puts roughly 85 of the 92 into
+    // the first half-second and then crawls, which is the count reading as a
+    // blur followed by a stall rather than as a number climbing.
+    const ramp = animate(progress, 92, { duration: 2.1, ease: "easeOut" });
     return () => ramp.stop();
   }, [skipped, rawPhase, progress]);
 
@@ -229,7 +239,7 @@ export function BootProvider({ children }: { children: ReactNode }) {
 
     const timer = window.setTimeout(() => {
       animate(progress, 100, {
-        duration: 0.45,
+        duration: 0.65,
         ease: [0.16, 1, 0.3, 1],
         onComplete: () => {
           if (live) setRawPhase("opening");

@@ -112,7 +112,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
         !isPresent && "pointer-events-none",
       )}
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.45, ease: EASE.inOut } }}
+      exit={{ opacity: 0, transition: { duration: 0.6, ease: EASE.inOut } }}
     >
       {/* ---- Ground ------------------------------------------------------ */}
 
@@ -131,7 +131,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
           opacity: opening ? 0.75 : artReady ? 0.6 : 0.25,
           scale: opening ? 1.25 : artReady ? 1 : 0.8,
         }}
-        transition={{ duration: opening ? 0.7 : 1.2, ease: EASE.out }}
+        transition={{ duration: opening ? 0.95 : 1.6, ease: EASE.out }}
       />
 
       {/* A single pass of a scan line. It runs once and never repeats — a loop
@@ -146,12 +146,12 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
           // top level it would be handed to a `y` that is a single value, not an
           // array, and has no keyframes to distribute across.
           transition={{
-            duration: 1.9,
-            delay: 0.35,
+            duration: 2.8,
+            delay: 0.95,
             ease: [0.5, 0, 0.5, 1],
             opacity: {
-              duration: 1.9,
-              delay: 0.35,
+              duration: 2.8,
+              delay: 0.95,
               times: [0, 0.12, 0.82, 1],
               ease: "linear",
             },
@@ -166,7 +166,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
       <motion.div
         className="absolute inset-0 flex flex-col justify-between"
         animate={{ opacity: opening ? 0 : 1 }}
-        transition={{ duration: 0.28, ease: EASE.inOut }}
+        transition={{ duration: 0.42, ease: EASE.inOut }}
       >
         {/* Top rail */}
         <Container wide>
@@ -179,11 +179,11 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
                     initial={{ y: "110%" }}
                     animate={{ y: "0%" }}
                     transition={{
-                      delay: 0.12 + index * 0.032,
+                      delay: 0.18 + index * 0.048,
                       type: "spring",
-                      stiffness: 300,
-                      damping: 26,
-                      mass: 0.8,
+                      stiffness: 210,
+                      damping: 28,
+                      mass: 0.9,
                     }}
                   >
                     {character}
@@ -197,7 +197,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
               className="font-display text-right text-[0.6875rem] leading-relaxed font-medium tracking-[0.18em] text-white/40 uppercase"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.5, ease: EASE.out }}
+              transition={{ duration: 0.9, delay: 0.95, ease: EASE.out }}
             >
               Est. {site.founded}
               <br />
@@ -213,7 +213,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
               className="flex items-end justify-between gap-8 pb-7 lg:pb-9"
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.42, ease: EASE.out }}
+              transition={{ duration: 1, delay: 0.8, ease: EASE.out }}
             >
               <div className="min-w-0">
                 {/* Masked swap, so the status *changes* rather than cross-fading
@@ -228,7 +228,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
                       initial={{ y: "110%" }}
                       animate={{ y: "0%" }}
                       exit={{ y: "-110%" }}
-                      transition={{ duration: 0.45, ease: EASE.out }}
+                      transition={{ duration: 0.6, ease: EASE.out }}
                     >
                       {status.label}
                     </motion.span>
@@ -279,7 +279,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
               style={{ width: MARK, height: MARK }}
               initial={{ scale: 1 }}
               animate={{ scale: PORTAL_SCALE }}
-              transition={{ duration: 0.62, ease: EASE.out }}
+              transition={{ duration: 0.95, ease: EASE.inOut }}
             />
             <motion.div
               aria-hidden
@@ -287,7 +287,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
               style={{ width: MARK, height: MARK }}
               initial={{ scale: 1 }}
               animate={{ scale: PORTAL_SCALE }}
-              transition={{ duration: 0.62, delay: 0.1, ease: EASE.out }}
+              transition={{ duration: 0.95, delay: 0.15, ease: EASE.inOut }}
             />
           </>
         )}
@@ -303,7 +303,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
             scale: opening ? 1.9 : artReady ? 1.14 : 1.32,
             opacity: opening ? 0 : artReady ? 1 : 0,
           }}
-          transition={{ duration: opening ? 0.6 : 1, ease: EASE.out }}
+          transition={{ duration: opening ? 0.8 : 1.3, delay: opening ? 0 : 0.34, ease: EASE.out }}
         />
 
         {/* The mark. Two transforms doing two different jobs: the wrapper
@@ -322,7 +322,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
             opacity: artReady ? 1 : 0,
             scale: opening ? 1.06 : 1,
           }}
-          transition={{ duration: 0.75, ease: EASE.out }}
+          transition={{ duration: 1.05, delay: opening ? 0 : 0.34, ease: EASE.out }}
         >
           <motion.div
             className="h-full w-full overflow-hidden rounded-[26%]"
@@ -332,7 +332,7 @@ export function BootCurtain({ phase, progress, ready, onSkip, onArtReady }: Boot
                 ? "inset(0% 0% 0% 0% round 26%)"
                 : "inset(46% 0% 46% 0% round 26%)",
             }}
-            transition={{ duration: 0.85, delay: 0.08, ease: EASE.out }}
+            transition={{ duration: 1.3, delay: 0.46, ease: EASE.out }}
           >
             <Image
               src={LOGO_SRC}
@@ -420,7 +420,7 @@ function Digit({ value, dim }: { value: number; dim: boolean }) {
         // The column is ten `1em` rows tall, so a percentage of its own height
         // is exactly one digit per 10%.
         animate={{ y: `${value * -10}%` }}
-        transition={{ type: "spring", stiffness: 240, damping: 30, mass: 0.7 }}
+        transition={{ type: "spring", stiffness: 170, damping: 28, mass: 0.8 }}
       >
         {DIGITS.map((digit) => (
           <span key={digit} className="block h-[1em] leading-[1em]">
