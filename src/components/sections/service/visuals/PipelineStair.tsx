@@ -205,7 +205,7 @@ export function PipelineStair() {
                     className="text-muted tabular-nums"
                     style={{ fontSize: ts(10) }}
                   >
-                    1.4M rows
+                    1M rows
                   </span>
                 </div>
                 <div style={{ display: "grid", gap: cq(9), marginTop: cq(14) }}>
@@ -262,7 +262,7 @@ export function PipelineStair() {
                   style={{ fontSize: ts(24), marginTop: cq(8) }}
                 >
                   <CountUp
-                    value={45200}
+                    value={40000}
                     prefix="$"
                     delay={4.2}
                     duration={1.5}
@@ -272,7 +272,7 @@ export function PipelineStair() {
                   className="text-ink-soft"
                   style={{ fontSize: ts(10), marginTop: cq(8) }}
                 >
-                  +12.4% vs last month
+                  +10% vs last month
                 </p>
               </>
             )}

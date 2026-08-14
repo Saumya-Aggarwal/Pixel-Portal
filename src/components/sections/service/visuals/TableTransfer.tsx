@@ -307,7 +307,7 @@ export function TableTransfer() {
           className="font-display text-brand-600 leading-none font-semibold tracking-tight tabular-nums"
           style={{ fontSize: ts(20) }}
         >
-          <CountUp value={142500} delay={1} duration={3} />
+          <CountUp value={120000} delay={1} duration={3} />
         </span>
       </FloatPanel>
 

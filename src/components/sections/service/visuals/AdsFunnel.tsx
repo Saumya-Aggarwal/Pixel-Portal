@@ -69,9 +69,9 @@ const TRUNK_Y = 92;
  * straight into each other.
  */
 const RINGS = [
-  { label: "Cross-Channel Traffic", figure: "48,200", x: 280, w: 400, y: 140 },
-  { label: "Intent & Engagement", figure: "6,140", x: 335, w: 290, y: 290 },
-  { label: "Conversion", figure: "412", x: 395, w: 170, y: 440 },
+  { label: "Cross-Channel Traffic", figure: "40,000", x: 280, w: 400, y: 140 },
+  { label: "Intent & Engagement", figure: "5,000", x: 335, w: 290, y: 290 },
+  { label: "Conversion", figure: "400", x: 395, w: 170, y: 440 },
 ];
 
 const RING_H = 110;
@@ -287,7 +287,7 @@ export function AdsFunnel() {
           className="font-display text-ink leading-none font-semibold tracking-tight tabular-nums"
           style={{ fontSize: ts(24) }}
         >
-          $14,500
+          $10,000
         </span>
       </SidePanel>
 
@@ -304,8 +304,7 @@ export function AdsFunnel() {
           style={{ fontSize: ts(24) }}
         >
           <CountUp
-            value={4.2}
-            decimals={1}
+            value={4}
             suffix="x"
             delay={1.5}
             duration={1.5}

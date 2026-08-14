@@ -29,7 +29,7 @@ export default async function ContactPage() {
         ]}
       />
 
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <div className="grid grid-cols-12 gap-y-12 lg:gap-x-12">
             {/* Questionnaire */}

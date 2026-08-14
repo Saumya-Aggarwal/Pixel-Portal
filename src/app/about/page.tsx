@@ -5,6 +5,7 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
+import { PrincipleCards } from "@/components/sections/PrincipleCards";
 import { TrustPanel } from "@/components/sections/TrustPanel";
 import { TeamBento } from "@/components/sections/about/TeamBento";
 import { ArrowGlyph, Button } from "@/components/ui/Button";
@@ -50,7 +51,7 @@ export default async function AboutPage() {
       />
 
       {/* ---- Vision ---- */}
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <div className="grid grid-cols-12 gap-y-12 lg:gap-x-16">
             <div className="col-span-12 lg:col-span-5">
@@ -112,7 +113,7 @@ export default async function AboutPage() {
       <TrustPanel clients className="bg-paper" />
 
       {/* ---- Team bento ---- */}
-      <Section spacing="base" id="team" divider>
+      <Section spacing="base" id="team">
         <Container wide>
           <div className="grid grid-cols-12 items-end gap-y-8">
             <div className="col-span-12 lg:col-span-7">
@@ -143,36 +144,31 @@ export default async function AboutPage() {
       </Section>
 
       {/* ---- Values ---- */}
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <Reveal y={0}>
             <Eyebrow>How we operate</Eyebrow>
           </Reveal>
-          <RevealGroup className="mt-10 grid gap-x-8 gap-y-10 lg:grid-cols-3">
-            {values.map((value, index) => (
-              <RevealItem key={value.title}>
-                <div className="border-hair border-t pt-6">
-                  <span
-                    aria-hidden
-                    className="text-brand-300 font-display block text-[0.875rem] font-semibold tabular-nums"
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="font-display text-ink mt-4 text-[1.25rem] leading-tight font-semibold">
-                    {value.title}
-                  </h3>
-                  <p className="text-muted mt-3 text-[0.9375rem] leading-relaxed">
-                    {value.body}
-                  </p>
-                </div>
-              </RevealItem>
-            ))}
-          </RevealGroup>
+          {/* The three cards below are all things a client normally discovers
+              are missing only after signing — an unrealistic deadline nobody
+              flagged, a delivery team they never met, a handover with no
+              documentation. The heading names that pattern so the cards land as
+              answers to something rather than as three assertions in a row. */}
+          <TextReveal
+            as="h2"
+            className="font-display text-h2 text-ink mt-6 max-w-[16ch] font-semibold"
+          >
+            The things you usually find out too late.
+          </TextReveal>
+
+          <div className="mt-12 lg:mt-16">
+            <PrincipleCards items={values} />
+          </div>
         </Container>
       </Section>
 
       {/* ---- Careers ---- */}
-      <Section spacing="base" className="bg-paper" divider>
+      <Section spacing="base" className="bg-paper">
         <Container wide>
           <div className="grid grid-cols-12 items-center gap-y-8">
             <div className="col-span-12 lg:col-span-8">

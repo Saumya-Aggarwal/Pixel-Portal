@@ -76,14 +76,14 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
       </PageHero>
 
       {/* ---- Metric band ---- */}
-      <Section spacing="tight" className="bg-paper" divider>
+      <Section spacing="tight" className="bg-paper">
         <Container wide>
           <StatRail items={study.metrics} size="sm" labelWidth="max-w-[20ch]" />
         </Container>
       </Section>
 
       {/* ---- Challenge ---- */}
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <div className="grid grid-cols-12 gap-y-8 lg:gap-x-16">
             <div className="col-span-12 lg:col-span-4">
@@ -104,7 +104,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
       </Section>
 
       {/* ---- Approach ---- */}
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <div className="grid grid-cols-12 gap-y-10 lg:gap-x-16">
             <div className="col-span-12 lg:col-span-4">
@@ -152,7 +152,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
       </Section>
 
       {/* ---- Gallery ---- */}
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-5">
@@ -180,7 +180,7 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
       </Section>
 
       {/* ---- Next studies ---- */}
-      <Section spacing="base" className="bg-paper" divider>
+      <Section spacing="base" className="bg-paper">
         <Container wide>
           <Reveal y={0}>
             <Eyebrow>Keep reading</Eyebrow>

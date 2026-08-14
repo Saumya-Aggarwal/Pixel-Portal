@@ -34,7 +34,7 @@ const steps = [
  */
 export function Process() {
   return (
-    <Section spacing="loose" divider>
+    <Section spacing="loose">
       <Container wide>
         <div className="grid grid-cols-12 gap-y-12 lg:gap-x-16">
           <div className="col-span-12 lg:col-span-4">

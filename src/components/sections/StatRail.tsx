@@ -17,7 +17,7 @@ import type { Metric } from "@/types/content";
  * threshold. That is the reason this component does not take a colour prop.
  *
  * Note this renders the rail only, not a `Section`. Two of the three callers
- * wrap it in `bg-paper` with a divider and one does not, and a component that
+ * wrap it in a tinted `bg-paper` band and one does not, and a component that
  * owns its own section chrome cannot be dropped inside an existing one.
  */
 

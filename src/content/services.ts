@@ -105,23 +105,21 @@ const digitalMarketing: Service[] = [
           "Community AMAs",
         ],
       },
-      {
-        // TODO(content): placeholder figures. These read as claims about real
-        // client outcomes and must be replaced with defensible numbers — or
-        // this block deleted — before the site goes live.
-        type: "metrics",
-        heading: "What operating this way tends to produce",
-        items: [
-          { value: 3, suffix: "x", label: "Median engagement rate lift" },
-          {
-            value: 62,
-            suffix: "%",
-            label: "Reduction in cost per qualified follow",
-          },
-          { value: 18, label: "Months of average retained partnership" },
-          { value: 40, suffix: "+", label: "Assets shipped per month" },
-        ],
-      },
+      // A `metrics` block sat here, headed "What operating this way tends to
+      // produce": a 3x median engagement lift, a 62% reduction in cost per
+      // qualified follow, 18 months of average retained partnership, 40+ assets
+      // a month. It was deleted rather than adjusted.
+      //
+      // Everything else fabricated on this site is furniture inside a drawing —
+      // a row count on a mocked dashboard, a version tag in a mocked IDE — and
+      // rounding those to obviously illustrative values is enough, because
+      // nobody reads a diagram's axis as a claim. This was the opposite: prose
+      // headed "what this produces", set at the size the page uses for facts,
+      // on a service page a prospect reads before signing. There is no rounded
+      // version of that which is not still a made-up result.
+      //
+      // Restore it the day the four figures exist and can be defended. The
+      // `metrics` block type is untouched and other services can use it.
       {
         type: "process",
         heading: "How the engagement runs",

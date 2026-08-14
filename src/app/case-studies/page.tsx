@@ -31,7 +31,7 @@ export default async function CaseStudiesPage() {
         ]}
       />
 
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           {/*
             Masonry-ish rhythm: every third entry claims a wider span and the

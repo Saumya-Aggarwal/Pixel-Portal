@@ -1,13 +1,6 @@
 import type { ElementType, ReactNode } from "react";
 
-import { DiamondRule } from "@/components/ui/DiamondRule";
 import { cn } from "@/lib/cn";
-
-// Re-exported so the whole page-furniture vocabulary stays one import. The
-// component itself lives apart because it is a Client Component, and folding
-// it in here would drag Container, Section, and Eyebrow across the boundary
-// with it.
-export { DiamondRule };
 
 /**
  * Shared page furniture. Every section on the site uses these, which is what
@@ -37,30 +30,28 @@ export function Container({
   );
 }
 
-/** Vertical rhythm. One scale for the whole site, fluid across breakpoints. */
+/**
+ * Vertical rhythm. One scale for the whole site, fluid across breakpoints.
+ *
+ * There used to be a `divider` prop that drew a gradient rule broken by a green
+ * diamond across the top edge, as the seam between two sections sharing a
+ * background. It is gone, and the spacing here is why it can be: at `base` two
+ * adjacent sections put 144–256px of white between their contents, which
+ * separates them on its own. A drawn ornament on top of that gap was the one
+ * piece of decoration on the site that had no job.
+ */
 export function Section({
   children,
   className,
   as: Tag = "section",
   id,
   spacing = "base",
-  divider = false,
 }: {
   children: ReactNode;
   className?: string;
   as?: ElementType;
   id?: string;
   spacing?: "tight" | "base" | "loose";
-  /**
-   * Draws a `DiamondRule` across the section's top edge — the seam treatment
-   * for two sections that share a background. Use this instead of
-   * `border-hair border-t`; it occupies the same line and no layout space.
-   *
-   * Not for the edges of a tinted (`bg-paper`) band. There the border is doing
-   * structural work — framing where the tint starts and stops — and a diamond
-   * sitting on a colour change reads as debris rather than ornament.
-   */
-  divider?: boolean;
 }) {
   const spacings = {
     tight: "py-[clamp(3rem,6vw,5rem)]",
@@ -70,13 +61,6 @@ export function Section({
 
   return (
     <Tag id={id} className={cn("relative", spacings[spacing], className)}>
-      {/* Half its own height above the edge, so the rule lands exactly on the
-          boundary the border used to occupy and nothing below it shifts. */}
-      {divider && (
-        <Container wide className="absolute inset-x-0 top-0 -translate-y-1/2">
-          <DiamondRule />
-        </Container>
-      )}
       {children}
     </Tag>
   );

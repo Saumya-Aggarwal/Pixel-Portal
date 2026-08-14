@@ -17,7 +17,6 @@ export default async function HomePage() {
     <>
       <Hero specialists={team.slice(0, 4)} />
       <ClientStrip />
-      {/* The seam below the ticker is `ServicePillars`' own top divider. */}
       <ServicePillars />
       <FeaturedWork />
       {/* Supersedes the bare `Stats` rail: same four figures, plus the

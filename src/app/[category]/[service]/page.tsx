@@ -7,6 +7,7 @@ import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
 import { ServiceSections } from "@/components/sections/service/ServiceSections";
+import { SiblingRail } from "@/components/sections/service/SiblingRail";
 import {
   ServiceHeroVisual,
   heroLayoutFor,
@@ -87,7 +88,7 @@ export default async function ServicePage({ params }: PageProps<"/[category]/[se
       </PageHero>
 
       {/* ---- Deliverables (base template — every service gets this) ---- */}
-      <Section spacing="base" divider>
+      <Section spacing="base">
         <Container wide>
           <div className="grid grid-cols-12 gap-y-10 lg:gap-x-16">
             <div className="col-span-12 lg:col-span-4">
@@ -134,7 +135,7 @@ export default async function ServicePage({ params }: PageProps<"/[category]/[se
 
       {/* ---- Related work ---- */}
       {related.length > 0 && (
-        <Section spacing="base" className="bg-paper" divider>
+        <Section spacing="base" className="bg-paper">
           <Container wide>
             <Reveal y={0}>
               <Eyebrow>Related work</Eyebrow>
@@ -169,32 +170,18 @@ export default async function ServicePage({ params }: PageProps<"/[category]/[se
       )}
 
       {/* ---- Sibling services ---- */}
-      <Section spacing="base" divider>
-        <Container wide>
-          <Reveal y={0}>
-            <h2 className="font-display text-h3 text-ink font-semibold">
-              More in {category.title}
-            </h2>
-          </Reveal>
-          <RevealGroup className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4" stagger={0.06}>
-            {siblings.map((sibling) => (
-              <RevealItem key={sibling.slug}>
-                <Link
-                  href={`/${category.slug}/${sibling.slug}`}
-                  className="group border-hair hover:border-brand-300 flex min-h-11 flex-col border-t py-5 transition-colors"
-                >
-                  <span className="text-ink group-hover:text-brand-700 text-[1rem] font-medium transition-colors">
-                    {sibling.navTitle ?? sibling.title}
-                  </span>
-                  <span className="text-muted mt-2 text-[0.875rem] leading-snug">
-                    {sibling.tagline}
-                  </span>
-                </Link>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </Container>
-      </Section>
+      <SiblingRail
+        heading={`More in ${category.title}`}
+        items={siblings.map((sibling) => ({
+          href: `/${category.slug}/${sibling.slug}`,
+          title: sibling.navTitle ?? sibling.title,
+          tagline: sibling.tagline,
+        }))}
+        action={{
+          href: `/${category.slug}`,
+          label: `All ${category.services.length} services`,
+        }}
+      />
 
       <CtaSection
         eyebrow="Next step"

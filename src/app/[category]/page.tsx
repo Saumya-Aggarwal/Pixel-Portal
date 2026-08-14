@@ -8,6 +8,8 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
 import { CategoryHeroVisual } from "@/components/sections/category/CategoryHeroVisual";
 import { CtaSection } from "@/components/sections/CtaSection";
+import { PrincipleCards } from "@/components/sections/PrincipleCards";
+import { SiblingRail } from "@/components/sections/service/SiblingRail";
 import { PageHero } from "@/components/sections/PageHero";
 import { ArrowGlyph } from "@/components/ui/Button";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
@@ -21,6 +23,28 @@ import { getCategories, getCategory } from "@/lib/content";
  * instead of rendering. Static segments like `/about` and `/contact` still win
  * over this dynamic segment in Next's route resolution order.
  */
+/**
+ * The credibility strip, shared by all three category pages.
+ *
+ * Hoisted out of the JSX now that it is data rather than markup — and because a
+ * literal rebuilt on every render was being handed to a component that keys off
+ * `title`.
+ */
+const CREDIBILITY = [
+  {
+    title: "One accountable team",
+    body: "Strategy, design, and engineering sit together. No handoffs between agencies that do not speak.",
+  },
+  {
+    title: "Fixed checkpoints",
+    body: "Every phase has a written sign-off. You always know what is done and what is next.",
+  },
+  {
+    title: "Built to be handed over",
+    body: "Documentation and training are part of delivery, not an upsell after it.",
+  },
+];
+
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
@@ -53,6 +77,11 @@ export default async function CategoryPage({
   const { category: slug } = await params;
   const category = await getCategory(slug);
   if (!category) notFound();
+  // The gap this closes: a reader who lands on one category had no route to the
+  // other two except the header. The services grid above only ever describes
+  // the category they are already in.
+  const others = (await getCategories()).filter((c) => c.slug !== category.slug);
+
 
   return (
     <>
@@ -70,7 +99,7 @@ export default async function CategoryPage({
       </PageHero>
 
       {/* ---- Sub-service grid ---- */}
-      <Section spacing="base" id="services" divider>
+      <Section spacing="base" id="services">
         <Container wide>
           <div className="grid grid-cols-12 items-end gap-y-6">
             <div className="col-span-12 lg:col-span-7">
@@ -155,35 +184,37 @@ export default async function CategoryPage({
       </Section>
 
       {/* ---- Credibility strip ---- */}
-      <Section spacing="tight" className="bg-paper" divider>
+      <Section spacing="base" className="bg-paper">
         <Container wide>
-          <RevealGroup className="grid gap-8 sm:grid-cols-3">
-            {[
-              {
-                title: "One accountable team",
-                body: "Strategy, design, and engineering sit together. No handoffs between agencies that do not speak.",
-              },
-              {
-                title: "Fixed checkpoints",
-                body: "Every phase has a written sign-off. You always know what is done and what is next.",
-              },
-              {
-                title: "Built to be handed over",
-                body: "Documentation and training are part of delivery, not an upsell after it.",
-              },
-            ].map((item) => (
-              <RevealItem key={item.title}>
-                <h3 className="font-display text-ink text-[1.125rem] font-semibold">
-                  {item.title}
-                </h3>
-                <p className="text-muted mt-3 text-[0.9375rem] leading-relaxed">
-                  {item.body}
-                </p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
+          <Reveal y={0}>
+            <Eyebrow>How we work</Eyebrow>
+          </Reveal>
+          {/* Deliberately the same three cards on all three category pages, and
+              the heading says so rather than leaving a reader to notice. It is
+              also the one claim this block can make that the services grid
+              above cannot: those differ by category, these do not. */}
+          <TextReveal
+            as="h2"
+            className="font-display text-h2 text-ink mt-6 max-w-[18ch] font-semibold"
+          >
+            What does not change, whichever service you pick.
+          </TextReveal>
+
+          <div className="mt-12 lg:mt-16">
+            <PrincipleCards items={CREDIBILITY} />
+          </div>
         </Container>
       </Section>
+
+      {/* ---- The other two categories ---- */}
+      <SiblingRail
+        heading="The other things we do"
+        items={others.map((other) => ({
+          href: `/${other.slug}`,
+          title: other.title,
+          tagline: other.description,
+        }))}
+      />
 
       <CtaSection
         eyebrow="Next step"

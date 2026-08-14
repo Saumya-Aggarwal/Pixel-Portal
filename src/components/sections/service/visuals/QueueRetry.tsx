@@ -70,8 +70,8 @@ const ATTEMPTS = [
 
 /** TODO(content): illustrative figures. */
 const COUNTS = [
-  { label: "Delivered · 24h", before: "18,402", after: "18,402", accent: true },
-  { label: "Retried", before: "214", after: "217" },
+  { label: "Delivered · 24h", before: "20,000", after: "20,000", accent: true },
+  { label: "Retried", before: "200", after: "203" },
   { label: "Dead-lettered", before: "3", after: "4" },
   { label: "Replayed", before: "3", after: "3" },
 ];

@@ -21,10 +21,10 @@ export function CtaSection({
   primaryLabel?: string;
 }) {
   return (
-    <Section spacing="loose" className="relative" divider>
-      {/* The clip lives on this layer rather than on the section itself, so it
-          still contains the bloom's overhang without also cropping the
-          top-edge divider — which sits half its height above the section box. */}
+    <Section spacing="loose" className="relative">
+      {/* The clip lives on this layer rather than on the section itself, so
+          the bloom's overhang is contained without the section box itself
+          becoming a clipping context for anything placed on its edges. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="grid-field absolute inset-0 opacity-70 [mask-image:radial-gradient(ellipse_60%_70%_at_50%_50%,black,transparent)]" />
         <div className="bg-brand-200/30 absolute -bottom-56 left-1/2 h-136 w-136 -translate-x-1/2 rounded-full blur-3xl" />

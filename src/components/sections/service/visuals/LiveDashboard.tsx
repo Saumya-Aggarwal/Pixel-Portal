@@ -234,14 +234,14 @@ export function LiveDashboard() {
             className="font-display text-ink leading-none font-semibold tracking-tight tabular-nums"
             style={{ fontSize: ts(18) }}
           >
-            $24,592
+            $20,000
           </p>
           <p
             className="text-brand-600 flex items-center leading-none font-medium tabular-nums"
             style={{ fontSize: ts(12), marginTop: ts(6), gap: ts(4) }}
           >
             <span aria-hidden>&uarr;</span>
-            18.4%
+            20%
           </p>
         </motion.div>
       </FloatPanel>
@@ -268,8 +268,8 @@ export function LiveDashboard() {
         >
           {/* TODO(content): illustrative figures. Believable, not measured. */}
           <CountUp
-            value={142840}
-            from={82100}
+            value={120000}
+            from={80000}
             prefix="$"
             delay={2}
             duration={2}

@@ -33,7 +33,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
         switch (section.type) {
           case "narrative":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container wide>
                   <div className="grid grid-cols-12 gap-y-8 lg:gap-x-16">
                     <div className="col-span-12 lg:col-span-5">
@@ -65,7 +65,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "metrics":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container wide>
                   <Reveal y={0}>
                     <h2 className="font-display text-h3 text-ink max-w-[20ch] font-semibold">
@@ -98,7 +98,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "process":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container wide>
                   <Reveal y={0}>
                     <h2 className="font-display text-h2 text-ink max-w-[16ch] font-semibold">
@@ -112,7 +112,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "faq":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container>
                   <div className="mx-auto max-w-3xl">
                     <Reveal y={0}>
@@ -130,7 +130,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "pillars":
             return (
-              <Section key={index} spacing="tight" className={tone} divider>
+              <Section key={index} spacing="tight" className={tone}>
                 <Container wide>
                   <RevealGroup className="grid gap-5 lg:grid-cols-3" stagger={0.09}>
                     {section.items.map((pillar) => (
@@ -145,7 +145,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "capabilities":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container wide>
                   <div className="max-w-[60ch]">
                     <TextReveal
@@ -176,7 +176,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "tags":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container wide>
                   <div className="grid grid-cols-12 gap-y-10 lg:gap-x-16">
                     <div className="col-span-12 lg:col-span-5">
@@ -212,7 +212,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "checklist":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container wide>
                   <div className="grid grid-cols-12 gap-y-10 lg:gap-x-16">
                     <div className="col-span-12 lg:col-span-5">
@@ -261,7 +261,7 @@ export function ServiceSections({ sections }: { sections: ServiceSection[] }) {
 
           case "comparison":
             return (
-              <Section key={index} spacing="base" className={tone} divider>
+              <Section key={index} spacing="base" className={tone}>
                 <Container>
                   <div className="mx-auto max-w-4xl">
                     <TextReveal

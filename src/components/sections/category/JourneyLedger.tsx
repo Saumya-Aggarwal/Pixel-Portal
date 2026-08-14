@@ -64,7 +64,7 @@ const STATIONS = [
     slug: "social-media-handling",
     title: "Social Media",
     eyebrow: "Touch 1 · Day 0",
-    stat: ["Reach", "18.4k"],
+    stat: ["Reach", "20k"],
   },
   {
     slug: "performance-ads",
@@ -82,7 +82,7 @@ const STATIONS = [
     slug: "email-marketing",
     title: "Email Campaigns",
     eyebrow: "Touch 4 · Day 17",
-    stat: ["Open rate", "68%"],
+    stat: ["Open rate", "60%"],
   },
   {
     slug: "performance-tracking-analytics",
@@ -108,9 +108,9 @@ const MOMENTS = [
  * nobody checked.
  */
 const CHANNELS = [
-  { label: "Social", share: 22 },
-  { label: "Paid", share: 31 },
-  { label: "Organic", share: 27 },
+  { label: "Social", share: 25 },
+  { label: "Paid", share: 30 },
+  { label: "Organic", share: 25 },
   { label: "Email", share: 20 },
 ];
 
@@ -364,7 +364,7 @@ function ScrubValue({ t }: { t: MotionValue<number> }) {
   const value = useTransform(t, (v) =>
     v < 0.8
       ? "—"
-      : `$${Math.round(((v - 0.8) / 0.2) * 12500).toLocaleString("en-US")}`,
+      : `$${Math.round(((v - 0.8) / 0.2) * 10000).toLocaleString("en-US")}`,
   );
 
   return (

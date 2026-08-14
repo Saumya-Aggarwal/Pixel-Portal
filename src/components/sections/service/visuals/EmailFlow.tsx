@@ -299,9 +299,9 @@ export function EmailFlow() {
       >
         {/* TODO(content): illustrative figures. */}
         {[
-          ["Delivered", "8,420"],
-          ["Opened", "42.8%"],
-          ["Clicked", "11.2%"],
+          ["Delivered", "10,000"],
+          ["Opened", "40%"],
+          ["Clicked", "10%"],
         ].map(([label, value], i) => (
           <span key={label} style={{ display: "grid", gap: ts(8) }}>
             <span className="text-muted" style={{ fontSize: ts(11) }}>
