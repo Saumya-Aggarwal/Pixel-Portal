@@ -5,13 +5,11 @@ import { motion } from "motion/react";
 import { Backlight } from "@/components/sections/service/visuals/chrome/Backlight";
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
+import { cq, px, py, ts } from "@/components/sections/service/visuals/canvas";
 import {
-  beat,
-  cq,
-  px,
-  py,
-  ts,
-} from "@/components/sections/service/visuals/canvas";
+  useSequence,
+  type SequenceStep,
+} from "@/components/sections/service/visuals/useSequence";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -32,6 +30,15 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * It is also the only cursor anywhere in the set, which is appropriate: this is
  * the one drawing whose subject is a person working a tool.
  *
+ * **The session is a state machine, not a timeline.** Every element used to
+ * carry its own copy of a 13-second loop with its own keyframe offsets, and the
+ * cursor visibly lagged the reactions it was supposed to be causing — clicks
+ * landed a stop early and the role selector never got its ripple. The cause and
+ * the fix are documented on `useSequence`; the short version is that the arrow
+ * and the things answering it were on two different clocks, so the answer is to
+ * have one clock and animate on the change. Reading the code below, `arrived`
+ * is the hinge: nothing reacts until the pointer has actually stopped moving.
+ *
  * **Two fixes to the blueprint.** It put the confirmation chip at 680,105,
  * inside the toolbar's own box and on top of the role selector it was meant to
  * confirm; the chip now sits in the band between the toolbar and the table
@@ -44,9 +51,6 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * pitch over the row's own height; a row with two admin rows above it moves
  * twice that, which is why the shift is computed per row rather than shared.
  */
-
-const LOOP = 13;
-const at = (seconds: number) => beat(seconds, LOOP);
 
 const SHELL = { x: 120, y: 80, w: 720, h: 480 };
 const RAIL_W = 160;
@@ -87,6 +91,81 @@ const STOP = {
   role: { x: ROLE_CX, y: 30 },
 };
 
+type StopName = keyof typeof STOP;
+
+/**
+ * The operator's session, as the steps it is actually made of.
+ *
+ * `travel` is the move into the step; `dwell` is the pause once the pointer is
+ * there. Reactions all fire on arrival, so a step's own duration is the only
+ * number that has to be right — there is no second list of offsets to keep in
+ * agreement with this one, which is exactly how the previous version drifted.
+ *
+ * Adding a stop is adding a row here. The whole loop is the sum of the column,
+ * currently a little over 13 seconds.
+ */
+interface Beat extends SequenceStep {
+  /** Where the pointer travels for this step. */
+  stop: StopName;
+  /** Whether the arrow is on screen during it. */
+  shown?: boolean;
+  /** It clicks the instant it arrives. */
+  click?: boolean;
+  /** The overlay this stop opens, held for the dwell. */
+  panel?: "logs" | "profile";
+  /** The click on this step is the one that changes the role. */
+  commit?: boolean;
+  /** Steps after the commit, which inherit the changed view. */
+  editor?: boolean;
+}
+
+const SESSION: readonly Beat[] = [
+  // The shell sits as found. Nothing has happened yet, and nothing should:
+  // a loop that opens mid-gesture reads as a clip starting late.
+  { stop: "idle", travel: 0, dwell: 0.9 },
+  // The arrow arrives at rest before it moves anywhere.
+  { stop: "idle", travel: 0.4, dwell: 0.4, shown: true },
+  { stop: "logs", travel: 0.85, dwell: 1.5, shown: true, click: true, panel: "logs" },
+  {
+    stop: "profile",
+    travel: 0.75,
+    dwell: 1.5,
+    shown: true,
+    click: true,
+    panel: "profile",
+  },
+  { stop: "role", travel: 0.9, dwell: 2.4, shown: true, click: true, commit: true },
+  // It leaves. The view it changed stays changed while it goes — the operator
+  // moving on is not an undo.
+  { stop: "idle", travel: 0.8, dwell: 0.4, shown: true, editor: true },
+  { stop: "idle", travel: 0.35, dwell: 0.9, editor: true },
+  // Off screen, the table repopulates and the loop is ready to run again.
+  { stop: "idle", travel: 0, dwell: 1.0 },
+];
+
+/** What the shell looks like with no one operating it: the session's outcome. */
+const PARKED: Beat = { stop: "idle", travel: 0, dwell: 0, editor: true };
+
+/**
+ * Reaction delays, in seconds, measured from the moment the pointer arrives.
+ *
+ * These are small on purpose. They are not synchronisation — the state change
+ * already guarantees the order — they are the beat that makes a consequence
+ * read as a consequence rather than as a coincidence.
+ */
+const REACT = {
+  /** Hover tint. Fast, because a hover is not an event. */
+  hover: 0.12,
+  /** The click ripple. */
+  click: 0.05,
+  /** An overlay answering the click. */
+  open: 0.14,
+  /** A pressed control's depress and release. */
+  press: 0.4,
+  /** The confirmation chip, which waits for the button to come back up. */
+  confirm: 0.3,
+};
+
 const COLUMNS = ["ID", "Name", "Role", "Last Active", "Status"];
 const GRID = "16% 24% 20% 22% 18%";
 
@@ -112,32 +191,48 @@ const isAdmin = (i: number) => ADMIN_ROWS.includes(i);
 const shiftFor = (i: number) =>
   `-${(ADMIN_ROWS.filter((a) => a < i).length * ROW_PITCH * 100) / ROW_H}%`;
 
-const SHIFT_TIMES = [0, at(7.8), at(8.4), at(11.5), 1];
-const DROP_TIMES = [0, at(7.5), at(8.0), at(11.5), 1];
-const DROP_OPACITY = [1, 1, 0, 0, 1];
-const DROP_X = ["0%", "0%", "-6%", "-6%", "0%"];
-
-/** Label swaps. Admin reads until the click, Editor from there to the reset. */
-const SWAP_TIMES = [0, at(7.0), at(7.2), at(11.5), at(11.8), 1];
-const SWAP_OUT = [1, 1, 0, 0, 1, 1];
-const SWAP_IN = [0, 0, 1, 1, 0, 0];
-
-/** Overlay in/out, as [enter, settled, leaving, gone]. */
-const overlay = (enter: number, exit: number) => ({
-  times: [0, at(enter), at(enter + 0.25), at(exit), at(exit + 0.25), 1],
-  opacity: [0, 0, 1, 1, 0, 0],
-  y: [8, 8, 0, 0, 8, 8],
+/**
+ * The consequence of the role change, as a cascade behind the confirmation:
+ * the two rows an Editor cannot see fade first, then the rest close the gap.
+ * On the way back both return together — a reset is not a performance.
+ */
+const DROP = (editor: boolean) => ({
+  duration: 0.4,
+  delay: editor ? 0.45 : 0,
+  ease: "easeInOut" as const,
+});
+const CLOSE = (editor: boolean) => ({
+  duration: 0.5,
+  delay: editor ? 0.75 : 0,
+  ease: "easeInOut" as const,
 });
 
-const LOGS = overlay(2.35, 3.5);
-const PROFILE = overlay(4.55, 5.7);
+/** Label crossfades, timed to land as the selector releases. */
+const SWAP = (editor: boolean) => ({
+  duration: 0.25,
+  delay: editor ? REACT.press * 0.75 : 0,
+  ease: "easeOut" as const,
+});
 
 export function AppShell() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
+  const phase = useSequence(SESSION, playing);
 
-  const swap = playing
-    ? { duration: LOOP, times: SWAP_TIMES, repeat: Infinity }
-    : undefined;
+  // Parked, the shell shows the session's outcome with no one at the controls.
+  // `arrived` is true so the outcome is a settled frame rather than a step
+  // caught mid-travel.
+  const step = playing ? phase.step : PARKED;
+  const arrived = playing ? phase.arrived : true;
+
+  const stop = STOP[step.stop];
+  const shown = playing && step.shown === true;
+  const clicking = arrived && step.click === true;
+  const panel = arrived ? step.panel : undefined;
+  const pressing = clicking && step.commit === true;
+  // The role change lands on the click, not at the top of the step that
+  // contains it — otherwise the table would rearrange while the cursor was
+  // still on its way to the button that rearranges it.
+  const editor = step.commit ? arrived : step.editor === true;
 
   return (
     <div ref={ref} className="@container relative aspect-3/2 w-full">
@@ -175,7 +270,9 @@ export function AppShell() {
           </div>
 
           {/* Hover tint, behind the list rather than on the item, so the item
-              itself stays a plain span and the two cannot fall out of step. */}
+              itself stays a plain span and the two cannot fall out of step.
+              It turns on when the pointer stops here and off when it leaves —
+              it can no longer answer a visit that has not happened. */}
           <motion.span
             className="bg-brand-50/70 absolute rounded-md"
             style={{
@@ -185,16 +282,8 @@ export function AppShell() {
               height: cq(NAV_H),
             }}
             initial={false}
-            animate={playing ? { opacity: [0, 0, 1, 1, 0, 0] } : { opacity: 0 }}
-            transition={
-              playing
-                ? {
-                    duration: LOOP,
-                    times: [0, at(1.9), at(2.1), at(3.6), at(3.9), 1],
-                    repeat: Infinity,
-                  }
-                : undefined
-            }
+            animate={{ opacity: arrived && step.stop === "logs" ? 1 : 0 }}
+            transition={{ duration: REACT.hover }}
           />
 
           <div style={{ display: "grid", gap: cq(3), marginTop: cq(20) }}>
@@ -274,27 +363,24 @@ export function AppShell() {
             >
               Export CSV
             </span>
+            {/* The depress runs on the click and only on the click. It cannot
+                start early any more, because the state it reads is the same
+                one the ripple reads. */}
             <motion.span
               className="border-brand-300 bg-brand-50 relative flex items-center rounded-full border"
               style={{ fontSize: ts(10), height: cq(26), width: cq(ROLE_W) }}
               initial={false}
-              animate={playing ? { scale: [1, 1, 0.96, 1, 1] } : { scale: 1 }}
+              animate={{ scale: pressing ? [1, 0.96, 1] : 1 }}
               transition={
-                playing
-                  ? {
-                      duration: LOOP,
-                      times: [0, at(6.85), at(7.0), at(7.2), 1],
-                      repeat: Infinity,
-                    }
-                  : undefined
+                pressing ? { duration: REACT.press, times: [0, 0.35, 1] } : { duration: 0 }
               }
             >
               <motion.span
                 className="text-brand-700 absolute font-medium"
                 style={{ left: cq(12) }}
                 initial={false}
-                animate={playing ? { opacity: SWAP_OUT } : { opacity: 0 }}
-                transition={swap}
+                animate={{ opacity: editor ? 0 : 1 }}
+                transition={SWAP(editor)}
               >
                 View: Admin
               </motion.span>
@@ -302,8 +388,8 @@ export function AppShell() {
                 className="text-brand-700 absolute font-medium"
                 style={{ left: cq(12) }}
                 initial={false}
-                animate={playing ? { opacity: SWAP_IN } : { opacity: 1 }}
-                transition={swap}
+                animate={{ opacity: editor ? 1 : 0 }}
+                transition={SWAP(editor)}
               >
                 View: Editor
               </motion.span>
@@ -312,6 +398,9 @@ export function AppShell() {
         </div>
 
         {/* ---- Confirmation ---- */}
+        {/* Waits for the button to come back up, and goes when the cursor does
+            — the chip confirms that click, so it must not outlive the hand
+            that caused it. */}
         <motion.span
           className="bg-brand-600 absolute z-40 grid place-items-center rounded-full font-semibold tracking-[0.08em] text-white uppercase"
           style={{
@@ -322,20 +411,12 @@ export function AppShell() {
             fontSize: ts(9),
           }}
           initial={false}
-          animate={
-            playing
-              ? { opacity: [0, 0, 1, 1, 0, 0], y: [8, 8, 0, 0, 8, 8] }
-              : { opacity: 0, y: 8 }
-          }
-          transition={
-            playing
-              ? {
-                  duration: LOOP,
-                  times: [0, at(7.2), at(7.6), at(8.6), at(9.0), 1],
-                  repeat: Infinity,
-                }
-              : undefined
-          }
+          animate={pressing ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+          transition={{
+            duration: 0.3,
+            delay: pressing ? REACT.confirm : 0,
+            ease: "easeOut",
+          }}
         >
           Access updated
         </motion.span>
@@ -380,24 +461,11 @@ export function AppShell() {
               }}
               initial={false}
               animate={
-                playing
-                  ? admin
-                    ? { opacity: DROP_OPACITY, x: DROP_X }
-                    : { y: ["0%", "0%", shift, shift, "0%"] }
-                  : admin
-                    ? { opacity: 0, x: "-6%" }
-                    : { y: shift }
+                admin
+                  ? { opacity: editor ? 0 : 1, x: editor ? "-6%" : "0%" }
+                  : { y: editor ? shift : "0%" }
               }
-              transition={
-                playing
-                  ? {
-                      duration: LOOP,
-                      times: admin ? DROP_TIMES : SHIFT_TIMES,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }
-                  : undefined
-              }
+              transition={admin ? DROP(editor) : CLOSE(editor)}
             >
               {row.map((cell, c) => (
                 <span
@@ -435,16 +503,16 @@ export function AppShell() {
             <motion.span
               className="absolute whitespace-nowrap"
               initial={false}
-              animate={playing ? { opacity: SWAP_OUT } : { opacity: 0 }}
-              transition={swap}
+              animate={{ opacity: editor ? 0 : 1 }}
+              transition={SWAP(editor)}
             >
               Showing 7 of 128 users
             </motion.span>
             <motion.span
               className="absolute whitespace-nowrap"
               initial={false}
-              animate={playing ? { opacity: SWAP_IN } : { opacity: 1 }}
-              transition={swap}
+              animate={{ opacity: editor ? 1 : 0 }}
+              transition={SWAP(editor)}
             >
               Showing 5 of 128 users
             </motion.span>
@@ -467,14 +535,19 @@ export function AppShell() {
         </div>
 
         {/* ---- Access log flyout ---- */}
+        {/* Height is left to the content on both flyouts. The blueprint gave
+            them fixed boxes — 165 and 112 — and `ts()`'s 10px type floor makes
+            the contents proportionally taller as the canvas shrinks, so the
+            profile card spilled its last row onto the panel behind it at every
+            width tested and the log card overflowed by a hair at some. The
+            profile card is anchored by its bottom edge instead of its top,
+            since it hangs off the rail's user chip and must grow upward. */}
         <Overlay
-          playing={playing}
-          spec={LOGS}
+          open={panel === "logs"}
           style={{
             left: cq(178),
             top: cq(140),
             width: cq(285),
-            height: cq(165),
           }}
         >
           <div className="flex items-baseline justify-between">
@@ -521,13 +594,11 @@ export function AppShell() {
 
         {/* ---- Profile popover ---- */}
         <Overlay
-          playing={playing}
-          spec={PROFILE}
+          open={panel === "profile"}
           style={{
             left: cq(22),
-            top: cq(296),
+            bottom: cq(72),
             width: cq(196),
-            height: cq(112),
           }}
         >
           <div className="flex items-center" style={{ gap: cq(9) }}>
@@ -582,7 +653,7 @@ export function AppShell() {
           </div>
         </Overlay>
 
-        <Pointer playing={playing} />
+        <Pointer stop={stop} shown={shown} travel={step.travel} clicking={clicking} />
       </FloatPanel>
     </div>
   );
@@ -590,13 +661,11 @@ export function AppShell() {
 
 /** A floating surface the pointer opens. Enters and leaves; never structural. */
 function Overlay({
-  playing,
-  spec,
+  open,
   style,
   children,
 }: {
-  playing: boolean;
-  spec: { times: number[]; opacity: number[]; y: number[] };
+  open: boolean;
   style: React.CSSProperties;
   children: React.ReactNode;
 }) {
@@ -610,22 +679,30 @@ function Overlay({
         boxShadow: "var(--shadow-float-hover)",
       }}
       initial={false}
-      animate={playing ? { opacity: spec.opacity, y: spec.y } : { opacity: 0 }}
-      transition={
-        playing
-          ? {
-              duration: LOOP,
-              times: spec.times,
-              repeat: Infinity,
-              ease: "easeOut",
-            }
-          : undefined
-      }
+      animate={open ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+      // Opening is the slower half, and it waits a beat behind the click so it
+      // reads as an answer. Closing is quick: the operator has already left.
+      transition={{
+        duration: open ? 0.28 : 0.18,
+        delay: open ? REACT.open : 0,
+        ease: "easeOut",
+      }}
     >
       {children}
     </motion.div>
   );
 }
+
+/**
+ * A stop's shell-relative coordinate as a percentage of the shell's own box.
+ *
+ * The pointer's wrapper is `inset-0` inside the shell, so a transform
+ * percentage resolves against the shell — which is exactly the space `STOP` is
+ * already written in. Dividing by the canvas (960x640) instead would scale
+ * every stop by 720/960 and land the arrow short of everything.
+ */
+const tx = (v: number) => `${((v / SHELL.w) * 100).toFixed(3)}%`;
+const ty = (v: number) => `${((v / SHELL.h) * 100).toFixed(3)}%`;
 
 /**
  * The operator's cursor. Rendered last, inside the shell, so it sits above the
@@ -635,94 +712,50 @@ function Overlay({
  * Small, and carried by a drop shadow rather than an outline. A thick stroke at
  * this size turns the arrow into a blob and competes with the 10px UI text it is
  * supposed to be pointing at.
+ *
+ * One move per step, so the travel can be eased properly — `easeInOut` here
+ * accelerates away from a stop and settles into the next one, which is how a
+ * hand moves and what the previous keyframe-array version could not express
+ * without warping every offset in the array along with it.
  */
-function Pointer({ playing }: { playing: boolean }) {
-  const path = [
-    STOP.idle,
-    STOP.idle,
-    STOP.idle,
-    STOP.logs,
-    STOP.logs,
-    STOP.profile,
-    STOP.profile,
-    STOP.role,
-    STOP.role,
-    STOP.role,
-    STOP.role,
-  ];
-
+function Pointer({
+  stop,
+  shown,
+  travel,
+  clicking,
+}: {
+  stop: { x: number; y: number };
+  shown: boolean;
+  travel: number;
+  clicking: boolean;
+}) {
   return (
     <motion.span
-      className="pointer-events-none absolute"
+      // Stretched over the shell so a percentage transform reads as a shell
+      // coordinate. Zero-size children ride along at its top-left corner.
+      className="pointer-events-none absolute inset-0"
       style={{ zIndex: 60 }}
       initial={false}
-      animate={
-        playing
-          ? {
-              left: path.map((p) => cq(p.x)),
-              top: path.map((p) => cq(p.y)),
-              opacity: [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-            }
-          : { left: cq(STOP.role.x), top: cq(STOP.role.y), opacity: 0 }
-      }
-      transition={
-        playing
-          ? {
-              duration: LOOP,
-              times: [
-                0,
-                at(1.0),
-                at(1.2),
-                at(2.2),
-                at(3.6),
-                at(4.4),
-                at(5.9),
-                at(6.8),
-                at(9.0),
-                at(9.4),
-                1,
-              ],
-              repeat: Infinity,
-              ease: "easeInOut",
-            }
-          : undefined
-      }
+      animate={{ x: tx(stop.x), y: ty(stop.y), opacity: shown ? 1 : 0 }}
+      // Position and fade are one transition on one element, started at one
+      // commit. They cannot drift apart the way two loop-length timelines did.
+      transition={{ duration: travel, ease: "easeInOut" }}
     >
-      {/* One ripple element, three pulses. Scale resets between them while the
-          opacity is still zero, so the snap back is never visible. */}
+      {/* One ripple element, one pulse per click. Scale resets between clicks
+          while the opacity is still zero, so the snap back is never visible. */}
       <motion.span
         className="border-brand-500 absolute rounded-full border"
         style={{ width: cq(26), height: cq(26), left: cq(-13), top: cq(-13) }}
         initial={false}
         animate={
-          playing
-            ? {
-                opacity: [0, 0, 0.85, 0, 0, 0.85, 0, 0, 0.85, 0, 0],
-                scale: [0.3, 0.3, 0.3, 1.4, 0.3, 0.3, 1.4, 0.3, 0.3, 1.4, 1.4],
-              }
-            : { opacity: 0, scale: 1 }
+          clicking
+            ? { opacity: [0, 0.85, 0], scale: [0.3, 1.4, 1.4] }
+            : { opacity: 0, scale: 0.3 }
         }
         transition={
-          playing
-            ? {
-                duration: LOOP,
-                times: [
-                  0,
-                  at(2.28),
-                  at(2.3),
-                  at(2.75),
-                  at(4.48),
-                  at(4.5),
-                  at(4.95),
-                  at(6.88),
-                  at(6.9),
-                  at(7.35),
-                  1,
-                ],
-                repeat: Infinity,
-                ease: "easeOut",
-              }
-            : undefined
+          clicking
+            ? { duration: 0.5, delay: REACT.click, times: [0, 0.12, 1], ease: "easeOut" }
+            : { duration: 0 }
         }
       />
       <svg
