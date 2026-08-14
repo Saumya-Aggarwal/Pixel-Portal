@@ -43,7 +43,10 @@ export function TracingRail({
         // The markup ships lit. Stripping the class here — inside useGSAP's
         // layout effect, before first paint — is what makes the finished state
         // the *default* rather than something JS has to arrive to produce.
-        const nodes = gsap.utils.toArray<HTMLElement>("[data-rail-node]", container.current);
+        const nodes = gsap.utils.toArray<HTMLElement>(
+          "[data-rail-node]",
+          container.current,
+        );
         nodes.forEach((node) => node.classList.remove("is-lit"));
 
         const railTween = gsap.fromTo(
@@ -89,59 +92,81 @@ export function TracingRail({
   );
 
   return (
-    <ol ref={container} className={cn("relative", className)}>
-      {/* Rail track. Sits under the node centres: 28px in on mobile (half of
-          the 56px node column), dead centre from lg up where the layout
-          alternates around it. */}
-      <span
-        aria-hidden
-        className="bg-hair absolute inset-y-0 left-6.75 w-px lg:left-1/2 lg:-translate-x-1/2"
+    <>
+      {/* The rail's x lives on the list, not on the rail, so the breakpoint
+          override can reach it. Declared inline on the track itself it would
+          outrank any stylesheet rule and the lg value would never apply. */}
+      <style>{`
+        [data-tracing-rail] { --rail-left: 28px; }
+        @media (min-width: 1024px) {
+          [data-tracing-rail] { --rail-left: calc(50% - 0.5px); }
+        }
+      `}</style>
+      <ol
+        ref={container}
+        className={cn("relative", className)}
+        data-tracing-rail
       >
+        {/* Rail track. Sits under the node centres: half a node in from the
+            left on mobile, dead centre from lg up where the layout alternates
+            around it. */}
         <span
-          ref={fill}
-          className="rail-origin-top from-brand-300 to-brand-600 block h-full w-full bg-linear-to-b"
-        />
-      </span>
+          aria-hidden
+          className="bg-hair absolute inset-y-0 w-px"
+          style={{ left: "var(--rail-left)" }}
+        >
+          <span
+            ref={fill}
+            className="rail-origin-top from-brand-300 to-brand-600 block h-full w-full bg-linear-to-b"
+          />
+        </span>
 
-      {steps.map((step, index) => {
-        const onLeft = index % 2 === 0;
+        {steps.map((step, index) => {
+          const onLeft = index % 2 === 0;
 
-        return (
-          <li
-            key={step.title}
-            className="relative grid grid-cols-[56px_1fr] items-start pb-12 last:pb-0 lg:grid-cols-[1fr_72px_1fr] lg:items-center lg:pb-8"
-          >
-            {/* Node. Ships with `is-lit`; GSAP strips it on mount and puts it
+          return (
+            <li
+              key={step.title}
+              className="relative grid grid-cols-[56px_1fr] items-start pb-12 last:pb-0 lg:grid-cols-[1fr_72px_1fr] lg:items-center lg:pb-8"
+            >
+              {/* Node. Ships with `is-lit`; GSAP strips it on mount and puts it
                 back as the rail arrives, so the finished state is the default
                 and an unrun tween leaves a complete timeline. */}
-            <span
-              data-rail-node
-              aria-hidden
-              className="border-hair is-lit col-start-1 row-start-1 flex size-13.5 items-center justify-center rounded-full border bg-white transition-[border-color,box-shadow] duration-500 [&.is-lit]:border-brand-500 [&.is-lit]:shadow-[0_0_0_6px_var(--color-brand-50)] lg:col-start-2"
-            >
-              <span className="font-display text-hair text-[0.8125rem] font-semibold tabular-nums transition-colors duration-500 in-[.is-lit]:text-brand-700">
-                {String(index + 1).padStart(2, "0")}
+              <span
+                data-rail-node
+                aria-hidden
+                // `justify-self-center` is what puts the node on the rail. A
+                // 54px node in a 72px column aligns to the column start by
+                // default — a definite width cancels `stretch` — so its centre
+                // sat 9px left of the line the rail is drawn on.
+                className="border-hair is-lit col-start-1 row-start-1 flex size-13.5 items-center justify-center justify-self-center rounded-full border bg-white transition-[border-color,box-shadow] duration-500 [&.is-lit]:border-brand-500 [&.is-lit]:shadow-[0_0_0_6px_var(--color-brand-50)] lg:col-start-2"
+              >
+                <span className="font-display text-hair text-[0.8125rem] font-semibold tabular-nums transition-colors duration-500 in-[.is-lit]:text-brand-700">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
               </span>
-            </span>
 
-            <div
-              className={cn(
-                "col-start-2 row-start-1 pt-3.5 lg:row-start-1 lg:pt-0",
-                onLeft ? "lg:col-start-1 lg:pr-10 lg:text-right" : "lg:col-start-3 lg:pl-10",
-              )}
-            >
-              <h3 className="font-display text-ink text-[1.125rem] leading-tight font-semibold">
-                {step.title}
-              </h3>
-              {step.description && (
-                <p className="text-muted mt-2.5 max-w-[46ch] text-[0.9375rem] leading-relaxed lg:inline-block">
-                  {step.description}
-                </p>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+              <div
+                className={cn(
+                  "col-start-2 row-start-1 pt-3.5 lg:row-start-1 lg:pt-0",
+                  onLeft
+                    ? "lg:col-start-1 lg:pr-10 lg:text-right"
+                    : "lg:col-start-3 lg:pl-10",
+                )}
+              >
+                <h3 className="font-display text-ink text-[1.125rem] leading-tight font-semibold">
+                  {step.title}
+                </h3>
+                {step.description && (
+                  <p className="text-muted mt-2.5 max-w-[46ch] text-[0.9375rem] leading-relaxed lg:inline-block">
+                    {step.description}
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </>
   );
 }
