@@ -20,24 +20,50 @@ for voice: direct, specific, unhyped, willing to say what the work does *not*
 include. Read it before writing anything else. Do not paraphrase it — the point
 is the register, not the sentences.
 
-**Two blocks contain invented numbers.** They are marked `TODO(content)` in
-`services.ts` and must be replaced with defensible figures or deleted outright
-before the site is public:
+**Invented numbers: one block deleted, the rest rounded.** A pass was made over
+all of them, sorting by a single question — *does this read as a measured client
+outcome, or as the furniture of a drawn interface?*
 
-| Location | What is fabricated |
+### Deleted, because rounding could not fix it
+
+`social-media-handling` → `metrics`, headed "What operating this way tends to
+produce": a 3x median engagement lift, 62% reduction in cost per qualified
+follow, 18 months average retention, 40+ assets a month.
+
+That was prose, set at the size the page uses for facts, on a page a prospect
+reads before signing. There is no rounded version of it that is not still a
+made-up result. The `metrics` block type is untouched and the deletion site
+carries a comment; restore it the day the four figures exist.
+
+### Rounded, so precision stops implying measurement
+
+Precision is the tell. `$142,840` reads as extracted from a real account;
+`$120,000` reads as a mock-up's demo data. Both are invented — only one claims
+to have been counted.
+
+| Location | Now reads |
 |---|---|
-| `social-media-handling` → `metrics` | 3x engagement lift, 62% CPQF reduction, 18-month retention, 40+ assets/month |
-| `LiveDashboard.tsx` (analytics illustration) | $142,840 attributed, $24,592 peak, +18.4% trend |
-| `marketing-seo-tracking-systems` → `visual.kpis` | 12 platforms, 40+ reports, 15-min refresh, 3 years history |
+| `LiveDashboard.tsx` (analytics) | $120,000 attributed, $20,000 peak, 20% trend |
+| `AdsFunnel.tsx` (performance ads) | $10,000 spend, 40,000 / 5,000 / 400 funnel, 4x blended ROAS |
+| `EmailFlow.tsx` (email marketing) | 10,000 delivered, 40% opened, 10% clicked |
+| `PipelineStair.tsx` (tracking systems) | $40,000 MRR, +10% month on month, 1M warehouse rows |
+| `QueueRetry.tsx` (API integrations) | 20,000 delivered, 200→203 retried |
+| `TableTransfer.tsx` (data migration) | 120,000 records migrated |
+| `JourneyLedger.tsx` (marketing hero) | 25/30/25/20 channel split, $10,000 attributed, 20k reach, 60% open rate |
 
-Note the analytics figures moved **out of `services.ts` and into the component**
-when that illustration was rebuilt to a blueprint. Numbers drawn inside an
-illustration are part of the artwork — a chart axis reading `$20k` is not
-content anyone would edit in a CMS. They are no less invented for that, so they
-stay on this list.
+Still replace them with real figures where real figures exist. But none of these
+now asserts a number anyone could quote back.
 
-These read as claims about real client outcomes. Nobody outside the company can
-tell they are placeholders.
+### Deliberately left alone
+
+`ArcDial.tsx`'s spec strip (template / breakpoint / SKU counts) and
+`Workbench.tsx`'s test counts, `v2.4.0` tag and branch names. These are the
+furniture of a depicted interface — the equivalent of a video scrubber reading
+`0:15 / 1:00`. Nobody reads a mocked IDE's branch name as a claim about a
+client, and stripping them would leave the illustrations looking broken rather
+than honest.
+
+They are recorded here so the decision is visible, not so it gets reversed.
 
 ### One figure deliberately left out
 
@@ -154,3 +180,29 @@ describe how the business operates. If any of them is not true, it needs
 changing before launch, not after a client quotes it back.
 
 Same applies to the `checklist` blocks, which are phrased as guarantees.
+
+---
+
+## Case studies and client logos
+
+`content/case-studies.ts` now holds seven real engagements (Fitclass Gyms,
+CredXP, Webaffino, The Couponsfeed, The Digital Media Feed, Content Delight,
+Sassy Strides) and `content/clients.ts` holds sixteen real client logos,
+rendered on the home page (`ClientStrip`) and the about page (`TrustPanel`).
+None of this is placeholder.
+
+**`metrics` is the one field that is not measured.** No client supplied a
+percentage, revenue figure, or timeline, and the card/detail templates are
+built around a numeric metrics row that every case study renders. The
+figures currently in `case-studies.ts` are illustrative estimates — plausible
+for the scope described, not client-reported results — and every page that
+renders them (`/case-studies`, a case study detail page, and the home page's
+`FeaturedWork`) also renders `MetricsNote` (`components/ui/Layout.tsx`), a
+small-print line stating the figures are illustrative. Two exceptions are
+real, not invented: Fitclass's "11 regional branches" and CredXP's "9 posts
+in the 3×3 grid" are both facts from the brief, not estimates.
+
+Replace the estimated figures with real ones the moment a client supplies
+them — swap the `value` in `case-studies.ts` and the `MetricsNote` call
+sites can stay as-is (a genuine mix of measured and illustrative figures
+still needs the caveat until every figure on a page is real).

@@ -6,7 +6,7 @@ import { useCallback, useReducer, useRef, useState } from "react";
 import { CheckCard, FieldGroup, RadioCard, TextArea, TextField } from "@/components/contact/Fields";
 import { ArrowGlyph, Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
-import { DUR, EASE } from "@/lib/motion";
+import { DUR, EASE, SPRING } from "@/lib/motion";
 import {
   BUDGETS,
   STEP_FIELDS,
@@ -339,14 +339,25 @@ export function InquiryStepper({ categories }: { categories: Category[] }) {
           </motion.div>
         </AnimatePresence>
 
-        {serverError && (
-          <p
-            role="alert"
-            className="border-brand-200 bg-brand-50 text-brand-900 mt-6 rounded-xl border px-4 py-3 text-[0.875rem]"
-          >
-            {serverError}
-          </p>
-        )}
+        <AnimatePresence>
+          {serverError && (
+            <motion.div
+              key="server-error"
+              initial={prefersReduced ? false : { height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={prefersReduced ? { opacity: 0 } : { height: 0, opacity: 0 }}
+              transition={{ duration: DUR.fast, ease: EASE.soft }}
+              className="overflow-hidden"
+            >
+              <p
+                role="alert"
+                className="border-brand-200 bg-brand-50 text-brand-900 mt-6 rounded-xl border px-4 py-3 text-[0.875rem]"
+              >
+                {serverError}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="border-hair mt-9 flex items-center justify-between gap-4 border-t pt-6">
           <button
@@ -460,12 +471,22 @@ function ReviewPanel({
 }
 
 function SuccessPanel({ name }: { name: string }) {
+  const prefersReduced = useReducedMotion();
+
   return (
-    <div
+    <motion.div
       role="status"
+      initial={prefersReduced ? false : { opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DUR.base, ease: EASE.out }}
       className="border-hair rounded-panel shadow-lift border bg-white p-10 text-center sm:p-14"
     >
-      <span className="bg-brand-50 text-brand-600 mx-auto grid h-16 w-16 place-items-center rounded-full">
+      <motion.span
+        className="bg-brand-50 text-brand-600 mx-auto grid h-16 w-16 place-items-center rounded-full"
+        initial={prefersReduced ? false : { opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={prefersReduced ? undefined : { ...SPRING.lift, delay: 0.15 }}
+      >
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="m5 12.5 4.5 4.5L19 7.5"
@@ -475,7 +496,7 @@ function SuccessPanel({ name }: { name: string }) {
             strokeLinejoin="round"
           />
         </svg>
-      </span>
+      </motion.span>
       <h2 className="font-display text-ink mt-7 text-[clamp(1.5rem,3vw,2.25rem)] font-semibold tracking-tight">
         Thanks{name ? `, ${name.split(" ")[0]}` : ""} — that is with us.
       </h2>
@@ -492,6 +513,6 @@ function SuccessPanel({ name }: { name: string }) {
           Back to home
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,12 +1,16 @@
 import { Marquee } from "@/components/motion/Marquee";
 import { Reveal } from "@/components/motion/Reveal";
 import { Container } from "@/components/ui/Layout";
-import { clientNames } from "@/content/site";
+import { clients } from "@/content/clients";
 
 /**
- * Client ticker. Set in the display face rather than logo images — placeholder
- * logos look worse than none, and typographic treatment is the more premium
- * choice regardless.
+ * Client ticker. Real logos, held to greyscale/low-opacity by default so the
+ * mixed formats (svg/png/webp) and source dimensions still read as one row —
+ * full colour only reveals on hover. Plain `<img>` rather than `next/image`:
+ * the logos are served from sixteen different client domains, several with
+ * URLs Vercel's image optimiser cannot re-encode (Next's own `_next/image`
+ * proxy URL, a Wix CDN transform URL), so remote-pattern allowlisting would
+ * not even cover every case.
  */
 export function ClientStrip() {
   return (
@@ -21,13 +25,16 @@ export function ClientStrip() {
 
       <div className="relative">
         <Marquee speed={38}>
-          {clientNames.map((name) => (
-            <span
-              key={name}
-              className="font-display text-ink/25 hover:text-brand-600 flex items-center gap-10 px-8 text-[clamp(1.25rem,2.5vw,1.875rem)] font-semibold tracking-tight whitespace-nowrap transition-colors duration-500"
-            >
-              {name}
-              <span aria-hidden className="bg-brand-300 h-1.5 w-1.5 rounded-full" />
+          {clients.map((client) => (
+            <span key={client.name} className="flex shrink-0 items-center px-8">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={client.logo}
+                alt={client.name}
+                loading="lazy"
+                decoding="async"
+                className="h-7 w-auto max-w-36 object-contain opacity-50 grayscale transition-all duration-500 hover:opacity-100 hover:grayscale-0"
+              />
             </span>
           ))}
         </Marquee>

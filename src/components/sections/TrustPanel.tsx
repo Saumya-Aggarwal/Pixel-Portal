@@ -2,7 +2,8 @@ import { Marquee } from "@/components/motion/Marquee";
 import { Reveal } from "@/components/motion/Reveal";
 import { StatRail } from "@/components/sections/StatRail";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
-import { clientNames, site, stats } from "@/content/site";
+import { clients as clientLogos } from "@/content/clients";
+import { site, stats } from "@/content/site";
 
 /**
  * The credibility surface: headline numbers, verifiable facts, client names.
@@ -19,9 +20,8 @@ import { clientNames, site, stats } from "@/content/site";
  * someone supplies a real figure, the panel simply does not have one. See
  * docs/CONTENT-TODO.md.
  *
- * The client row reuses the typographic treatment from `ClientStrip` rather
- * than logo images, holding to the decision recorded there — placeholder logos
- * look worse than none.
+ * The client row reuses the real logo marquee `ClientStrip` renders, just at
+ * a smaller scale for this panel's tighter footprint.
  */
 export function TrustPanel({
   assurance,
@@ -107,15 +107,16 @@ export function TrustPanel({
                   Trusted by teams at
                 </p>
                 <Marquee speed={44} className="mt-5">
-                  {clientNames.map((name) => (
-                    <span
-                      key={name}
-                      className="font-display text-ink/25 hover:text-brand-600 flex items-center px-6 text-[1.125rem] font-semibold whitespace-nowrap transition-colors duration-500"
-                    >
-                      {name}
-                      <span aria-hidden className="text-hair ml-6">
-                        ·
-                      </span>
+                  {clientLogos.map((client) => (
+                    <span key={client.name} className="flex shrink-0 items-center px-6">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={client.logo}
+                        alt={client.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-6 w-auto max-w-32 object-contain opacity-50 grayscale transition-all duration-500 hover:opacity-100 hover:grayscale-0"
+                      />
                     </span>
                   ))}
                 </Marquee>

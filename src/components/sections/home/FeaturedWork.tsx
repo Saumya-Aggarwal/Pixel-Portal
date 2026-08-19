@@ -4,7 +4,7 @@ import { ParallaxImage } from "@/components/motion/ParallaxImage";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
 import { ArrowGlyph, Button } from "@/components/ui/Button";
-import { Container, Eyebrow, Section } from "@/components/ui/Layout";
+import { Container, Eyebrow, MetricsNote, Section } from "@/components/ui/Layout";
 import { getFeaturedCaseStudies } from "@/lib/content";
 
 /**
@@ -117,13 +117,20 @@ export async function FeaturedWork() {
                     </span>
 
                     <div className="relative p-6 pt-16 lg:p-8 lg:pt-20">
+                      {/* Title and summary are clamped because the row's height
+                          is set by whichever tile's own copy is tallest — real
+                          case study copy varies far more in length than the
+                          placeholder copy did, and an unclamped paragraph on a
+                          narrow tile could grow tall enough to set the whole
+                          row, leaving its sibling looking empty above and the
+                          clamped tile's text starting right under the badge. */}
                       <div className="flex items-end justify-between gap-6">
                         <div className="min-w-0">
                           <p className="text-eyebrow text-brand-200 uppercase">{study.client}</p>
-                          <h3 className="font-display mt-2.5 text-[clamp(1.25rem,2.2vw,1.75rem)] leading-tight font-semibold tracking-tight text-white">
+                          <h3 className="font-display mt-2.5 line-clamp-2 text-[clamp(1.25rem,2.2vw,1.75rem)] leading-tight font-semibold tracking-tight text-white">
                             {study.title}
                           </h3>
-                          <p className="mt-3 max-w-prose text-[0.9375rem] leading-relaxed text-white/70">
+                          <p className="mt-3 line-clamp-2 max-w-prose text-[0.9375rem] leading-relaxed text-white/70">
                             {study.summary}
                           </p>
                         </div>
@@ -155,6 +162,8 @@ export async function FeaturedWork() {
             );
           })}
         </RevealGroup>
+
+        <MetricsNote className="mt-8 text-right" />
       </Container>
     </Section>
   );

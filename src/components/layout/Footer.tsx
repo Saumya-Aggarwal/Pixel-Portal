@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/layout/Logo";
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { ArrowGlyph } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Layout";
 import { site } from "@/content/site";
@@ -13,9 +14,9 @@ export async function Footer() {
   return (
     <footer className="border-hair mt-auto border-t bg-white">
       <Container wide>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-12 py-16 lg:grid-cols-12 lg:py-20">
+        <RevealGroup className="grid grid-cols-2 gap-x-8 gap-y-12 py-16 lg:grid-cols-12 lg:py-20">
           {/* Identity */}
-          <div className="col-span-2 lg:col-span-4">
+          <RevealItem className="col-span-2 lg:col-span-4">
             <Link href="/" aria-label="Pixel Portal — home">
               <Logo />
             </Link>
@@ -36,33 +37,38 @@ export async function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </RevealItem>
 
           {/* Service columns — generated, so they cannot drift from the nav */}
           {categories.map((category) => (
-            <nav key={category.slug} aria-label={category.title} className="lg:col-span-2">
-              <h2 className="text-eyebrow text-ink uppercase">
-                <Link href={`/${category.slug}`} className="hover:text-brand-700 transition-colors">
-                  {category.title}
-                </Link>
-              </h2>
-              <ul className="mt-4 space-y-1">
-                {category.services.map((service) => (
-                  <li key={service.slug}>
-                    <Link
-                      href={`/${category.slug}/${service.slug}`}
-                      className="text-muted hover:text-brand-700 flex min-h-9 items-center text-[0.875rem] leading-snug transition-colors"
-                    >
-                      {service.navTitle ?? service.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            <RevealItem key={category.slug} className="lg:col-span-2">
+              <nav aria-label={category.title}>
+                <h2 className="text-eyebrow text-ink uppercase">
+                  <Link
+                    href={`/${category.slug}`}
+                    className="hover:text-brand-700 transition-colors"
+                  >
+                    {category.title}
+                  </Link>
+                </h2>
+                <ul className="mt-4 space-y-1">
+                  {category.services.map((service) => (
+                    <li key={service.slug}>
+                      <Link
+                        href={`/${category.slug}/${service.slug}`}
+                        className="text-muted hover:text-brand-700 flex min-h-9 items-center text-[0.875rem] leading-snug transition-colors"
+                      >
+                        {service.navTitle ?? service.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </RevealItem>
           ))}
 
           {/* Contact */}
-          <div className="col-span-2 lg:col-span-2">
+          <RevealItem className="col-span-2 lg:col-span-2">
             <h2 className="text-eyebrow text-ink uppercase">Contact</h2>
             <ul className="mt-4 space-y-3">
               <li>
@@ -92,11 +98,11 @@ export async function Footer() {
                 ))}
               </address>
             ))}
-          </div>
-        </div>
+          </RevealItem>
+        </RevealGroup>
 
         {/* Closing CTA */}
-        <div className="border-hair border-t py-10">
+        <Reveal y={0} className="border-hair border-t py-10">
           <Link
             href="/contact"
             className="group flex flex-wrap items-baseline justify-between gap-4"
@@ -109,7 +115,7 @@ export async function Footer() {
               <ArrowGlyph />
             </span>
           </Link>
-        </div>
+        </Reveal>
 
         <div className="border-hair text-muted flex flex-col gap-3 border-t py-6 text-[0.8125rem] sm:flex-row sm:items-center sm:justify-between">
           <p>

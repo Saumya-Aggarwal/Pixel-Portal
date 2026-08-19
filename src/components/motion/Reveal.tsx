@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { useCallback, useRef, type ReactNode } from "react";
 
-import { BLUR, DUR, EASE, VIEWPORT } from "@/lib/motion";
+import { BLUR, DUR, EASE, VIEWPORT, VIEWPORT_GROUP } from "@/lib/motion";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /**
@@ -104,7 +104,7 @@ export function RevealGroup({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={VIEWPORT}
+      viewport={VIEWPORT_GROUP}
       variants={{
         hidden: {},
         visible: { transition: { staggerChildren: stagger, delayChildren: delay } },

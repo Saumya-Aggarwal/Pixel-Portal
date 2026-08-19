@@ -191,6 +191,14 @@ export interface CaseStudy {
   challenge: string;
   approach: string[];
   featured?: boolean;
+  /**
+   * Opt-in bespoke evidence panels for the detail page's right column,
+   * replacing the generic interface/chart skeleton. Absent by default — a
+   * hand-built mockup is only worth the authoring cost where the engagement's
+   * actual shape (a curated grid, a lead pipeline) gives it something specific
+   * to show.
+   */
+  evidenceLayout?: "curated-grid";
 }
 
 export interface NavItem {

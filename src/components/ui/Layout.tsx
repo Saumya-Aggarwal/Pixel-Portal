@@ -89,3 +89,16 @@ export function Rule({ className }: { className?: string }) {
   return <hr className={cn("border-hair border-t", className)} />;
 }
 
+/**
+ * Small-print note for case study metrics that were not supplied by the
+ * client. Deliberately unobtrusive — the point is that the figure is not
+ * presented as a measured result, not that it draws attention to itself.
+ */
+export function MetricsNote({ className }: { className?: string }) {
+  return (
+    <p className={cn("text-muted/60 text-[0.6875rem] leading-snug", className)}>
+      Figures are illustrative estimates, not measured client-reported results.
+    </p>
+  );
+}
+

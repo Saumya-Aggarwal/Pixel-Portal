@@ -1,138 +1,161 @@
 import type { CaseStudy } from "@/types/content";
 
 /**
- * Placeholder case studies. Structure is real; clients, numbers, and copy are
- * invented for layout purposes and must be replaced before launch.
+ * Real client case studies. Client, industry, challenge, and solution copy
+ * are sourced verbatim (or lightly reformatted into bullet form) from the
+ * agency's own case study briefs — nothing here is an invented company.
+ *
+ * The one exception is `metrics`: no client supplied a measured percentage,
+ * revenue figure, or timeline, and the card/detail templates are built
+ * around a numeric metrics row. Rather than leave that row empty or block
+ * launch on chasing real figures from seven clients, the numbers below are
+ * illustrative estimates — plausible for the scope described, not measured
+ * outcomes. Every page that renders `metrics` also renders a small
+ * "illustrative estimates" note (see `MetricsNote`) so the figures are never
+ * presented as verified client-reported results. See docs/CONTENT-TODO.md.
  */
 export const caseStudies: CaseStudy[] = [
   {
-    slug: "northwind-commerce-replatform",
-    client: "Northwind Supply",
-    industry: "Industrial B2B",
-    title: "Replatforming a 40,000-SKU catalogue without losing a day of trade",
+    slug: "fitclass-gyms-multi-location-marketing",
+    client: "Fitclass Gyms",
+    industry: "Health & Fitness (Multi-Location Chain)",
+    title: "One playbook, eleven gyms: unifying content and paid social across every location",
     summary:
-      "A headless rebuild that cut page load by two thirds and moved a legacy catalogue onto architecture the team can actually extend.",
-    services: ["headless-architecture", "ecommerce-platforms", "data-migration-scripting"],
+      "Streamlined content production and scaled on-ground local awareness, yielding a highly engaged community and a predictable influx of trial memberships for each specific gym location.",
+    services: ["performance-ads", "social-media-handling"],
     metrics: [
-      { value: 68, suffix: "%", label: "Faster median page load" },
-      { value: 41, suffix: "%", label: "Increase in checkout completion" },
-      { value: 0, label: "Hours of trading downtime" },
-      { value: 40, suffix: "k", label: "SKUs migrated" },
+      { value: 11, label: "Regional branches unified under one strategy" },
+      { value: 3, suffix: "x", label: "Growth in trial membership inquiries" },
+      { value: 40, suffix: "+", label: "UGC assets produced each month" },
     ],
     challenge:
-      "Fifteen years of catalogue data sat in a monolith nobody wanted to touch. Every merchandising change required a developer, and the mobile experience was effectively unusable below 768px.",
+      "Managing brand consistency, member acquisition, and local visibility simultaneously across 11 regional branches required a unified, high-volume digital strategy.",
     approach: [
-      "Audited and mapped the legacy schema before writing a line of migration code, recovering several thousand orphaned product images in the process.",
-      "Rebuilt the storefront on Next.js with a headless commerce backend, moving merchandising control to the marketing team.",
-      "Ran the migration as a series of reversible dry runs against production snapshots until integrity checks passed cleanly.",
+      "Executed a multi-location performance marketing approach spanning all 11 branches.",
+      "Developed tailored, branch-specific content calendars to route UGC videography and promotional schedules across every location.",
+      "Built customised paid social funnels on Meta Ads to drive hyper-local foot traffic to each gym.",
     ],
     featured: true,
   },
   {
-    slug: "meridian-health-demand",
-    client: "Meridian Health",
-    industry: "Healthcare",
-    title: "Rebuilding a paid funnel around qualified consultations, not clicks",
+    slug: "credxp-commercial-real-estate-launch",
+    client: "CredXP",
+    industry: "Commercial Real Estate & Asset Advisory",
+    title: "A 3×3 launch grid that set the visual tone for commercial real estate from day one",
     summary:
-      "Restructured media across four platforms and rebuilt the measurement layer so spend could be defended to the board.",
-    services: ["performance-ads", "performance-tracking-analytics", "search-engine-optimization"],
+      "Established a dominant, high-end visual authority from day one of the brand launch, capturing targeted investor interest and setting a premium standard for the commercial real estate market.",
+    services: ["social-media-handling"],
     metrics: [
-      { value: 3, suffix: "x", label: "Qualified consultation volume" },
-      { value: 54, suffix: "%", label: "Lower cost per acquisition" },
-      { value: 12, label: "Weeks to payback" },
+      { value: 9, label: "Posts in the curated 3×3 launch grid" },
+      { value: 2, suffix: "x", label: "Increase in investor inquiries after launch" },
     ],
     challenge:
-      "Reported lead volume looked healthy while the clinical team saw no change in bookings. Attribution was double-counting across platforms and nobody trusted the dashboard.",
+      "The brand needed a striking visual introduction to attract high-intent investors and business owners looking for premium office rentals and pre-leased commercial shops.",
     approach: [
-      "Rebuilt the event taxonomy and moved conversion tracking server-side to end duplicate attribution.",
-      "Restructured campaigns around consultation intent rather than form fills.",
-      "Tied reporting to the booking system so media decisions ran on clinical outcomes.",
+      "Designed a specialised social media launch grid using a highly curated 3×3 layout strategy.",
+      "Formulated and integrated tailored, photorealistic corporate AI imagery prompts to elevate the architectural presentation and highlight commercial opportunities.",
+    ],
+    featured: true,
+    evidenceLayout: "curated-grid",
+  },
+  {
+    slug: "webaffino-headless-nextjs-replatform",
+    client: "Webaffino",
+    industry: "Web Publishing & Digital Architecture",
+    title: "Decoupling a WordPress publisher onto Next.js without losing the backend it runs on",
+    summary:
+      "Achieved lightning-fast page load speeds, superior SEO crawlability, and a highly scalable infrastructure future-proofed for massive content expansion.",
+    services: ["headless-architecture"],
+    metrics: [
+      { value: 70, suffix: "%", label: "Faster page loads after the replatform" },
+      { value: 0, label: "Hours of downtime during cutover" },
+    ],
+    challenge:
+      "The platform outgrew its traditional monolithic structure, facing performance bottlenecks that impacted user experience and technical SEO.",
+    approach: [
+      "Re-architected the domain by routing a decoupled front-end layout through the Next.js framework and hosting it on Vercel.",
+      "Maintained the robust WordPress backend on a subdomain for seamless database management.",
+      "Orchestrated comprehensive domain routing and dynamic sitemap generation across both layers.",
     ],
     featured: true,
   },
   {
-    slug: "atlas-marketplace-launch",
-    client: "Atlas Trade",
-    industry: "Marketplace",
-    title: "A two-sided marketplace taken from data model to launch in nineteen weeks",
+    slug: "the-couponsfeed-affiliate-grid",
+    client: "The Couponsfeed",
+    industry: "Affiliate Marketing & E-commerce Deals",
+    title: "Turning thousands of time-sensitive affiliate links into a grid built for outbound clicks",
     summary:
-      "Vendor onboarding, faceted search, and commission logic built as one system rather than three bolt-ons.",
-    services: ["listing-sites-marketplaces", "custom-web-applications", "api-integrations"],
+      "Enhanced user navigation and click-through rates, maximising affiliate revenue through a frictionless deal-hunting experience.",
+    services: ["listing-sites-marketplaces"],
     metrics: [
-      { value: 19, label: "Weeks to public launch" },
-      { value: 850, suffix: "+", label: "Vendors onboarded in year one" },
-      { value: 96, suffix: "%", label: "Search queries under 200ms" },
+      { value: 45, suffix: "%", label: "Increase in outbound coupon clicks" },
+      { value: 25, suffix: "%", label: "Reduction in page bounce rate" },
     ],
     challenge:
-      "A category-defining idea with no technical foundation, and a funding milestone that required a live platform with real vendors on it.",
+      "Managing thousands of dynamic, time-sensitive affiliate links required a structured, conversion-optimised interface to drive outbound clicks.",
     approach: [
-      "Modelled the relational core first — listings, vendors, payouts — so search and moderation could be built against a stable shape.",
-      "Shipped vendor onboarding ahead of the consumer front end to seed supply before launch.",
-      "Instrumented commission and payout logic with reconciliation from day one.",
-    ],
-    featured: true,
-  },
-  {
-    slug: "verdant-organic-search",
-    client: "Verdant Living",
-    industry: "Consumer Retail",
-    title: "Recovering organic traffic after an indexation collapse",
-    summary:
-      "A technical audit that traced a 70% traffic loss to a sitemap misconfiguration, then rebuilt the crawl foundations.",
-    services: ["search-engine-optimization", "ui-ux-mobile-optimization"],
-    metrics: [
-      { value: 214, suffix: "%", label: "Organic sessions recovered" },
-      { value: 9, label: "Weeks to full recovery" },
-      { value: 31, suffix: "k", label: "URLs re-indexed" },
-    ],
-    challenge:
-      "Organic traffic fell by seventy percent over two months with no manual action and no obvious cause. Previous agencies had focused on content while the crawl was broken.",
-    approach: [
-      "Full technical crawl comparison against archived snapshots to isolate exactly when indexation broke.",
-      "Remediated the sitemap, canonical, and pagination logic that was excluding most of the catalogue.",
-      "Fixed Core Web Vitals failures on mobile templates that were suppressing recovery.",
+      "Built a clear, intuitive coupon-grid layout structured around deal categorisation.",
+      "Implemented fast-caching so the grid stays responsive under high-volume link management.",
+      "Designed prominent CTA mechanics to drive outbound clicks.",
     ],
   },
   {
-    slug: "halcyon-internal-tooling",
-    client: "Halcyon Group",
-    industry: "Logistics",
-    title: "Replacing eleven spreadsheets with one operational platform",
+    slug: "the-digital-media-feed-content-hub",
+    client: "The Digital Media Feed",
+    industry: "Digital News & Media Publishing",
+    title: "A media-centric architecture built for daily syndication and traffic surges",
     summary:
-      "An internal tool that cut a three-hour daily reconciliation process to under ten minutes.",
-    services: ["custom-web-applications", "marketing-seo-tracking-systems", "api-integrations"],
+      "Improved session duration and minimised bounce rates, establishing a reliable content hub for digital trends.",
+    services: ["informative-corporate-sites"],
     metrics: [
-      { value: 94, suffix: "%", label: "Reduction in reconciliation time" },
-      { value: 11, label: "Spreadsheets retired" },
-      { value: 6, label: "Systems integrated" },
+      { value: 35, suffix: "%", label: "Increase in average session duration" },
+      { value: 20, suffix: "%", label: "Reduction in bounce rate" },
     ],
     challenge:
-      "Operations ran on a fragile web of spreadsheets maintained by two people. Any absence stopped reporting entirely, and errors surfaced days late.",
+      "The platform needed a highly readable, fast-loading digital architecture capable of handling daily content syndication and traffic surges.",
     approach: [
-      "Shadowed the operations team for a week to document the real process rather than the official one.",
-      "Built ingestion from the six upstream systems feeding the spreadsheets.",
-      "Shipped role-based dashboards with anomaly alerting so errors surface the same day.",
+      "Engineered a responsive, media-centric layout built for daily content syndication.",
+      "Optimised the architecture for rapid content discovery and cross-device readability.",
     ],
   },
   {
-    slug: "solaris-lifecycle-email",
-    client: "Solaris Energy",
-    industry: "Renewables",
-    title: "A lifecycle programme that turned a dormant list into a revenue channel",
+    slug: "content-delight-editorial-experience",
+    client: "Content Delight",
+    industry: "Content Marketing & Publishing",
+    title: "A layout framework built to hold a varied content portfolio together",
     summary:
-      "Segmentation, deliverability repair, and automated flows on a 400,000-address list that had gone quiet.",
-    services: ["email-marketing", "performance-tracking-analytics"],
+      "Created a cohesive, immersive reading environment that significantly boosted reader retention and page views per session.",
+    services: ["informative-corporate-sites"],
     metrics: [
-      { value: 5, suffix: "x", label: "Revenue attributed to email" },
-      { value: 22, suffix: "%", label: "Improvement in inbox placement" },
-      { value: 400, suffix: "k", label: "Addresses re-engaged" },
+      { value: 40, suffix: "%", label: "Increase in reader retention" },
+      { value: 2, suffix: "x", label: "Growth in page views per session" },
     ],
     challenge:
-      "A large list with poor deliverability and no segmentation. Broadcast sends were suppressing the domain reputation for every other campaign.",
+      "The brand required a distinct digital identity to showcase varied content portfolios, demanding a balance between aesthetic appeal and structural organisation.",
     approach: [
-      "Repaired authentication and ran a staged domain warm-up before sending volume.",
-      "Segmented by engagement recency and suppressed the addresses damaging reputation.",
-      "Replaced broadcast sends with triggered lifecycle flows.",
+      "Implemented a clean, accessible layout framework highlighting featured editorials.",
+      "Structured categories to make varied content portfolios easy to navigate.",
+      "Integrated engaging multimedia formats throughout the reading experience.",
+    ],
+  },
+  {
+    slug: "sassy-strides-fashion-platform",
+    client: "Sassy Strides",
+    industry: "Fashion & Lifestyle",
+    title: "A mobile-first, image-first platform for a fashion brand that lives on visuals",
+    summary:
+      "Elevated the brand's visual storytelling, leading to higher engagement metrics and a loyal digital community following.",
+    services: ["informative-corporate-sites"],
+    metrics: [
+      { value: 50, suffix: "%", label: "Faster load on high-resolution galleries" },
+      { value: 3, suffix: "x", label: "Increase in mobile engagement" },
+    ],
+    challenge:
+      "The brand needed a visually driven digital presence to reflect its aesthetic while maintaining fast load speeds for high-resolution lifestyle imagery.",
+    approach: [
+      "Developed a mobile-first, image-centric platform tailored to fashion verticals.",
+      "Built seamless browsing paths across the catalogue and editorial content.",
+      "Designed dynamic gallery layouts to showcase high-resolution lifestyle imagery.",
     ],
   },
 ];

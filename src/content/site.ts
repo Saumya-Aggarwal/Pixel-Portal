@@ -35,15 +35,3 @@ export const stats = [
   { value: 240, suffix: "+", label: "Projects delivered" },
   { value: 18, label: "Countries served" },
 ];
-
-/** Marquee strip on the home page. Placeholder client names. */
-export const clientNames = [
-  "Northwind Supply",
-  "Meridian Health",
-  "Atlas Trade",
-  "Verdant Living",
-  "Halcyon Group",
-  "Solaris Energy",
-  "Kestrel Financial",
-  "Orchard & Vine",
-];

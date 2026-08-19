@@ -88,6 +88,22 @@ export const DESKTOP_QUERY = "(min-width: 768px)";
  */
 export const VIEWPORT = { once: true, amount: 0.25 } as const;
 
+/**
+ * Viewport config for `RevealGroup`, which wraps lists and grids that can run
+ * far taller than the viewport — the case studies grid and the team bento
+ * both exceed it several times over on a normal screen.
+ *
+ * `amount` is a fraction of the *target's own* bounding box, not the
+ * viewport's. For anything taller than roughly 4x the viewport height,
+ * `amount: 0.25` can never be satisfied — no scroll position gets a quarter
+ * of a multi-thousand-pixel element inside the window at once — so the group
+ * stays on its `hidden` variant forever and the whole section renders blank.
+ * `amount: 0` (any overlap counts) with a negative bottom margin instead
+ * fires as soon as the group's top edge is a little past the bottom of the
+ * viewport, independent of how tall the group runs.
+ */
+export const VIEWPORT_GROUP = { once: true, amount: 0, margin: "0px 0px -15% 0px" } as const;
+
 /** Standard rise-and-fade. Distance is deliberately small; big travel reads cheap. */
 export const riseVariants = {
   hidden: { opacity: 0, y: 24 },

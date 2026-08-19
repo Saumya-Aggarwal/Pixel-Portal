@@ -67,6 +67,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${inter.variable} h-full`}
+      // Browser extensions (Bitdefender's `bis_skin_checked`, Grammarly,
+      // dark-mode rewriters, password managers) inject attributes into
+      // <html>/<body> before React hydrates. That's a real DOM diff but not
+      // a bug in this tree, and it's un-fixable from application code — the
+      // extension runs outside anything we render. Scoped to these two tags
+      // only, so a genuine mismatch inside the page still throws normally.
+      suppressHydrationWarning
     >
       <head>
         {/*
@@ -92,7 +99,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 [data-boot="core"]{position:relative!important;inset:auto!important;margin:0!important;width:100%!important;z-index:auto!important}`}</style>
         </noscript>
       </head>
-      <body className="flex min-h-full flex-col bg-white">
+      <body className="flex min-h-full flex-col bg-white" suppressHydrationWarning>
         {/*
           Outside `template.tsx`, and that placement is load-bearing rather than
           tidy. `RouteTransition` fades every route up from `opacity: 0`, so a
