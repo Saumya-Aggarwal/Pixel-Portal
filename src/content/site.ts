@@ -8,9 +8,9 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://pixelportal.com",
   tagline: "Digital marketing, websites, and software — under one roof.",
   description:
-    "Pixel Portal is a fifty-person digital agency building demand, platforms, and bespoke software for companies that have outgrown off-the-shelf.",
-  teamSize: 50,
-  founded: 2016,
+    "Pixel Portal is a ten-person digital agency building demand, platforms, and bespoke software for companies that have outgrown off-the-shelf.",
+  teamSize: 10,
+  founded: 2024,
   email: "Hello@pixelportal.in",
   phone: "+91 92203 95353",
   offices: [
@@ -30,8 +30,8 @@ export const site = {
 
 /** Headline numbers used on the home and about pages. */
 export const stats = [
-  { value: 50, label: "Specialists across five disciplines" },
-  { value: 9, suffix: "+", label: "Years building for clients" },
-  { value: 240, suffix: "+", label: "Projects delivered" },
-  { value: 18, label: "Countries served" },
+  { value: 10, suffix: "+", label: "Specialists across five disciplines" },
+  { value: 2, suffix: "+", label: "Years building for clients" },
+  { value: 100, suffix: "+", label: "Projects delivered" },
+  { value: 3, suffix: "+", label: "Countries served" },
 ];

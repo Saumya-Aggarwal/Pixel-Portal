@@ -380,10 +380,10 @@ export function Hero({ specialists }: HeroProps) {
                   className={`${GLASS} p-6`}
                 >
                   <p className="font-display text-ink text-4xl leading-none font-extrabold tracking-tight">
-                    <CountUp value={240} suffix="+" delay={DELAY.statOne + 0.2} />
+                    <CountUp value={100} suffix="+" delay={DELAY.statOne + 0.2} />
                   </p>
                   <p className="font-display text-ink-soft mt-3 text-[0.9375rem] leading-snug">
-                    Projects delivered across 18 countries since {site.founded}.
+                    Projects delivered across 3 countries since {site.founded}.
                   </p>
 
                   <div

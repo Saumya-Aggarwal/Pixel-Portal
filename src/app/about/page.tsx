@@ -16,7 +16,7 @@ import { getDepartments, getTeam } from "@/lib/content";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Pixel Portal is a fifty-person team across strategy, design, engineering, and delivery, working from Gurgaon.",
+    "Pixel Portal is a ten-person team across strategy, design, engineering, and delivery, working from Gurgaon.",
   alternates: { canonical: "/about" },
 };
 
@@ -42,8 +42,8 @@ export default async function AboutPage() {
     <>
       <PageHero
         eyebrow="About us"
-        heading="Fifty people who would rather build the thing than talk about it."
-        body="Founded in 2016. One studio, one team, and a deliberate refusal to grow faster than we can hire well."
+        heading="Ten people who would rather build the thing than talk about it."
+        body="Founded in 2024. One studio, one team, and a deliberate refusal to grow faster than we can hire well."
         crumbs={[
           { label: "Home", href: "/" },
           { label: "About", href: "/about" },
@@ -71,7 +71,7 @@ export default async function AboutPage() {
                 {[
                   "Most companies end up with a media agency that does not talk to a web agency that does not talk to whoever built the internal tooling. The seams between them are where budgets disappear.",
                   "Pixel Portal was built to remove those seams. Demand generation, platform engineering, and bespoke software sit in one company, under one commercial relationship, with one team accountable for the outcome.",
-                  "That is also why we have stayed at fifty people. It is the largest size at which everyone still knows what everyone else is shipping.",
+                  "That is also why we have stayed at ten people. It is the largest size at which everyone still knows what everyone else is shipping.",
                 ].map((paragraph) => (
                   <RevealItem key={paragraph} y={20}>
                     <p className="text-lead text-muted">{paragraph}</p>
