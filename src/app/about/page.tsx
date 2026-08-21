@@ -6,12 +6,12 @@ import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
 import { PrincipleCards } from "@/components/sections/PrincipleCards";
 import { TrustPanel } from "@/components/sections/TrustPanel";
+import { Bench } from "@/components/sections/about/Bench";
 import { SeamContrast } from "@/components/sections/about/SeamContrast";
-import { TeamBento } from "@/components/sections/about/TeamBento";
 import { ArrowGlyph, Button } from "@/components/ui/Button";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
 import { site } from "@/content/site";
-import { getDepartments, getTeam } from "@/lib/content";
+import { getTeam } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "About",
@@ -36,7 +36,17 @@ const values = [
 ];
 
 export default async function AboutPage() {
-  const [team, departments] = await Promise.all([getTeam(), getDepartments()]);
+  const team = await getTeam();
+
+  /**
+   * Headcount per discipline, counted from the roster rather than written
+   * out here — so `Bench` cannot fall out of step with `content/team.ts`
+   * the way a second hand-maintained list of numbers eventually would.
+   */
+  const headcounts = team.reduce<Record<string, number>>((counts, member) => {
+    counts[member.department] = (counts[member.department] ?? 0) + 1;
+    return counts;
+  }, {});
 
   return (
     <>
@@ -95,7 +105,7 @@ export default async function AboutPage() {
           the marquee is the only place the roster appears. */}
       <TrustPanel clients className="bg-paper" />
 
-      {/* ---- Team bento ---- */}
+      {/* ---- The bench ---- */}
       <Section spacing="base" id="team">
         <Container wide>
           <div className="grid grid-cols-12 items-end gap-y-8">
@@ -121,7 +131,7 @@ export default async function AboutPage() {
           </div>
 
           <div className="mt-12">
-            <TeamBento members={team} departments={departments} />
+            <Bench headcounts={headcounts} />
           </div>
         </Container>
       </Section>
