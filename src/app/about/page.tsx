@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
-import { ParallaxImage } from "@/components/motion/ParallaxImage";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { PageHero } from "@/components/sections/PageHero";
 import { PrincipleCards } from "@/components/sections/PrincipleCards";
 import { TrustPanel } from "@/components/sections/TrustPanel";
+import { SeamContrast } from "@/components/sections/about/SeamContrast";
 import { TeamBento } from "@/components/sections/about/TeamBento";
 import { ArrowGlyph, Button } from "@/components/ui/Button";
 import { Container, Eyebrow, Section } from "@/components/ui/Layout";
@@ -81,28 +81,11 @@ export default async function AboutPage() {
             </div>
           </div>
 
-          {/* Offset image pair — intentionally uneven */}
-          <div className="mt-16 grid grid-cols-12 gap-6 lg:mt-24">
-            <div className="col-span-12 lg:col-span-7">
-              <ParallaxImage
-                alt="The Gurgaon studio"
-                seed="studio-gurgaon"
-                aspect="aspect-[16/10]"
-                className="rounded-panel"
-                strength={12}
-                sizes="(max-width: 1024px) 100vw, 58vw"
-              />
-            </div>
-            <div className="col-span-12 lg:col-span-5 lg:mt-16">
-              <ParallaxImage
-                alt="Inside the studio"
-                seed="studio-gurgaon-interior"
-                aspect="aspect-[4/5]"
-                className="rounded-panel"
-                strength={-9}
-                sizes="(max-width: 1024px) 100vw, 40vw"
-              />
-            </div>
+          {/* Even pair, unlike the offset image pair this replaced: the two
+              panels are a comparison, and a comparison whose halves sit at
+              different heights reads as one being an aside to the other. */}
+          <div className="mt-16 lg:mt-24">
+            <SeamContrast />
           </div>
         </Container>
       </Section>
