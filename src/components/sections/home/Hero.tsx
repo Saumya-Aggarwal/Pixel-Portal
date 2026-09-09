@@ -1,7 +1,13 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useCallback, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import { useBoot } from "@/components/boot/BootProvider";
 import { Frame, initials } from "@/components/media/Frame";
@@ -9,15 +15,17 @@ import { SplineScene } from "@/components/media/SplineScene";
 import { CascadeText } from "@/components/motion/CascadeText";
 import { CountUp } from "@/components/motion/CountUp";
 import { FloatingCard } from "@/components/motion/FloatingCard";
+import { ArrowGlyph, Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Layout";
 import { site } from "@/content/site";
 import { cn } from "@/lib/cn";
 import { DUR, EASE } from "@/lib/motion";
 import type { TeamMember } from "@/types/content";
 
-const SPLINE_SCENE = "https://prod.spline.design/NbU6scJvWHLpfXhs/scene.splinecode";
+const SPLINE_SCENE =
+  "https://prod.spline.design/NbU6scJvWHLpfXhs/scene.splinecode";
 
-/** Tailwind `lg` — the split hero, and the only width where a fixed-to-column glide is safe. */
+/** Tailwind `lg` — the split hero, and the only width where the core is centred at all. */
 const LG_QUERY = "(min-width: 1024px)";
 
 function subscribeLg(onChange: () => void) {
@@ -29,14 +37,78 @@ function subscribeLg(onChange: () => void) {
 const getLgSnapshot = () => window.matchMedia(LG_QUERY).matches;
 /**
  * Assume the stacked layout through hydration. A first-visit desktop reader
- * still has the curtain up while this reconciles, so the centred box can land
- * a tick late without being seen; a phone reader must never start in `fixed`
- * or the resolve has nothing coherent to settle into.
+ * still has the curtain up while this reconciles, so the core can be parked at
+ * centre a tick late without being seen; a phone reader must never be parked
+ * there at all, since below `lg` the object's stage is at the foot of the
+ * stack and flying it up from centre is the interruption this layout removes.
  */
 const getLgServerSnapshot = () => false;
 
 function useIsLaptop() {
   return useSyncExternalStore(subscribeLg, getLgSnapshot, getLgServerSnapshot);
+}
+
+/**
+ * The element's resting box, in viewport coordinates, ignoring any transform
+ * currently applied to it.
+ *
+ * `getBoundingClientRect` cannot be used here: it reports the *posed* box, and
+ * the pose is the thing being measured against. Walking `offsetParent` reads
+ * the laid-out position instead, which transforms do not touch — so this
+ * returns the same numbers whether the core is parked at centre or sitting in
+ * its column.
+ */
+function restingBox(el: HTMLElement) {
+  let left = 0;
+  let top = 0;
+  for (
+    let node: HTMLElement | null = el;
+    node;
+    node = node.offsetParent as HTMLElement | null
+  ) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+  }
+  return {
+    left: left - window.scrollX,
+    top: top - window.scrollY,
+    width: el.offsetWidth,
+    height: el.offsetHeight,
+  };
+}
+
+/**
+ * How far the core has to travel to sit dead centre of the viewport.
+ *
+ * Measured rather than expressed in CSS, because the distance is between two
+ * things CSS cannot relate: the element's own place in a grid column and the
+ * middle of the screen. Re-measured on resize, since both ends move.
+ */
+function useCentringOffset(
+  ref: React.RefObject<HTMLDivElement | null>,
+  active: boolean,
+) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!active) return;
+
+    const measure = () => {
+      const el = ref.current;
+      if (!el) return;
+      const box = restingBox(el);
+      setOffset({
+        x: window.innerWidth / 2 - (box.left + box.width / 2),
+        y: window.innerHeight / 2 - (box.top + box.height / 2),
+      });
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [ref, active]);
+
+  return offset;
 }
 
 /**
@@ -96,7 +168,12 @@ const RESOLVE = { type: "spring", bounce: 0.1, duration: 1.7 } as const;
  * The core's arrival: a touch more bounce than the resolve, held back a beat
  * so the grid behind it has started drawing before the object lands on it.
  */
-const CORE_IN = { type: "spring", bounce: 0.26, duration: 1.5, delay: 0.25 } as const;
+const CORE_IN = {
+  type: "spring",
+  bounce: 0.26,
+  duration: 1.5,
+  delay: 0.25,
+} as const;
 
 /**
  * Entrance ladder, measured from the moment the boot resolves. Everything in
@@ -116,6 +193,7 @@ const CORE_IN = { type: "spring", bounce: 0.26, duration: 1.5, delay: 0.25 } as 
 const DELAY = {
   headline: 0,
   lead: 0.5,
+  cta: 0.66,
   statOne: 0.82,
   statTwo: 1.02,
 } as const;
@@ -164,11 +242,12 @@ interface HeroProps {
  *
  * There is deliberately no `<Preloader />` swapping one scene for another. The
  * core is one `<Spline>` that never unmounts — a WebGL context torn down and
- * rebuilt costs a white flash and a second scene download, so the transition is
- * a Motion `layout` animation on its wrapper instead: `fixed`-and-centred
- * becomes `relative`-in-column, and Motion interpolates between the two
- * measured boxes. It also means the scene streams in behind the curtain, so by
- * the time the portal opens there is an object there rather than a glow.
+ * rebuilt costs a white flash and a second scene download — and it never leaves
+ * the flow either. It is held at screen centre by a measured translation and
+ * released back to zero on the resolve, so the glide is a spring on a transform
+ * rather than an animation between two different layouts. It also means the
+ * scene streams in behind the curtain, so by the time the portal opens there is
+ * an object there rather than a glow.
  *
  * Negative top margin pulls the section under the fixed header, then matching
  * padding restores the safe area; the header floats over white here instead
@@ -183,12 +262,12 @@ export function Hero({ specialists }: HeroProps) {
   const isLaptop = useIsLaptop();
 
   const isResolved = phase === "complete";
-  /** Park the core at screen centre only on the split layout. Below `lg` the
-   *  column is already stacked, and a fixed-to-relative layout animation
-   *  across that much vertical distance fails to settle — the object would
-   *  stick mid-viewport after the resolve. Small screens keep the core in
-   *  flow and rely on the scale/opacity entrance instead. */
-  const isCentred = !isResolved && isLaptop;
+  /** Park the core at screen centre only on the split layout, and only when
+   *  the intro is genuinely playing. Below `lg` the object's stage sits below
+   *  the headline, the lead and the CTA, so there is nothing for a glide down
+   *  the whole stack to add — those widths keep the core in place and let the
+   *  scale/opacity entrance carry it. */
+  const isCentred = intro && !isResolved && isLaptop;
   /** Held at zero behind the curtain: its entrance should be the first thing
    *  through the portal, not something that already happened out of sight. */
   const coreVisible = phase === "core" || isResolved;
@@ -199,6 +278,26 @@ export function Hero({ specialists }: HeroProps) {
    * it on every render of the hero.
    */
   const onSceneReady = useCallback(() => markReady("scene"), [markReady]);
+
+  /**
+   * The glide, as a transform rather than a layout animation.
+   *
+   * This used to be Motion's `layout` on a wrapper that swapped `fixed` and
+   * centred for `relative` in-column, and it never animated: measured through
+   * a boot, the core went from its column to screen centre and back in one
+   * frame each way, with no intermediate positions at all. Layout projection
+   * works by comparing two measured boxes, and an element that leaves the flow
+   * changes which box it is even measured against — so both ends were correct
+   * and the travel between them did not exist.
+   *
+   * Translating an in-flow element has none of that problem: it is the same
+   * box throughout, the animation is a plain spring on `x`/`y`, and nothing
+   * reflows or re-frames the WebGL canvas mid-flight. It also leaves the core
+   * occupying its column the whole time, so the cards below no longer jump to
+   * the top of the column while it is away.
+   */
+  const coreRef = useRef<HTMLDivElement>(null);
+  const centring = useCentringOffset(coreRef, isCentred);
 
   return (
     <section className="relative -mt-18 overflow-x-clip bg-white pt-18 lg:-mt-20 lg:pt-20">
@@ -234,9 +333,16 @@ export function Hero({ specialists }: HeroProps) {
       />
 
       <Container wide className="relative">
-        {/* On small screens the stack is headline → cube → lead → cards, so the
-            object sits against the title instead of under a full lead paragraph.
-            At `lg` the copy reforms as one left column and the scene as the right. */}
+        {/* Below `lg` the stack is strict: headline → lead → CTA → cube →
+            cards. The pitch and the thing that acts on it are one uninterrupted
+            run, and the object gets its own stage underneath.
+
+            It used to read headline → cube → lead, which put a rotating 500px
+            canvas between the first half of the sentence and the second, and
+            left the only conversion on the page below all of it.
+
+            At `lg` the copy reforms as one left column and the scene as the
+            right, and the CTA drops out — the header carries it there. */}
         <div className="grid grid-cols-1 gap-y-0 pt-10 pb-20 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-x-12 lg:gap-y-0 lg:pt-20 lg:pb-28">
           {/* ================= Headline =================
 
@@ -273,30 +379,67 @@ export function Hero({ specialists }: HeroProps) {
             </motion.div>
           </div>
 
-          {/* ================= Lead — under the headline on lg, under the cube on small screens == */}
+          {/* ================= Lead — directly under the headline at every width == */}
           <div
             key={isResolved ? "lead-revealed" : "lead-pending"}
-            className="relative z-10 order-3 lg:col-start-1 lg:row-start-2"
+            className="relative z-10 order-2 lg:col-start-1 lg:row-start-2"
           >
             <motion.p
               initial={HIDDEN}
               animate={isResolved ? SHOWN : HIDDEN}
-              transition={{ duration: DUR.slow, delay: DELAY.lead, ease: EASE.out }}
-              className="font-display text-lead text-muted mt-2 max-w-lg lg:mt-8"
+              transition={{
+                duration: DUR.slow,
+                delay: DELAY.lead,
+                ease: EASE.out,
+              }}
+              // Close enough to the headline to read as one block. It sat at
+              // `mt-2` because a cube used to separate the two and the gap was
+              // measured against that, not against the type.
+              className="font-display text-lead text-muted mt-5 max-w-lg lg:mt-8"
             >
-              Demand generation, platforms, and bespoke software — designed and run by one team, so
-              the strategy and the thing that ships are never two different conversations.
+              Demand generation, platforms, and bespoke software — designed and
+              run by one team, so the strategy and the thing that ships are
+              never two different conversations.
             </motion.p>
+          </div>
+
+          {/* ================= CTA — small screens only =================
+
+              The header's own "Start a project" collapses into the burger below
+              `lg`, so without this the home page's primary conversion is behind
+              a menu tap. At `lg` the header button is visible at all times and
+              a second one in the hero would be the same offer twice, a screen
+              apart. */}
+          <div
+            key={isResolved ? "cta-revealed" : "cta-pending"}
+            className="relative z-10 order-3 lg:hidden"
+          >
+            <motion.div
+              initial={HIDDEN}
+              animate={isResolved ? SHOWN : HIDDEN}
+              transition={{
+                duration: DUR.slow,
+                delay: DELAY.cta,
+                ease: EASE.out,
+              }}
+              className="mt-7"
+            >
+              <Button href="/contact" size="md">
+                Start a project
+                <ArrowGlyph />
+              </Button>
+            </motion.div>
           </div>
 
           {/* ================= Scene + cards =================
               `contents` below `lg` lets the cube and the cards take their own
-              order in the stack (cube, then lead, then cards). At `lg` this
-              becomes a normal right column again so the cards stay under the
-              scene. */}
+              order in the stack — both now sit after the CTA, so the narrative
+              runs headline → lead → CTA before the object gets its stage. At
+              `lg` this becomes a normal right column again so the cards stay
+              under the scene. */}
           <div className="contents lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:block">
-            <div className="order-2 lg:order-none">
-            {/* No card, no frame — the canvas sits directly on the page.
+            <div className="order-4 lg:order-none">
+              {/* No card, no frame — the canvas sits directly on the page.
 
                 Three nested boxes, which is two more than looks necessary:
 
@@ -344,76 +487,73 @@ export function Hero({ specialists }: HeroProps) {
                   than the box and the surplus is transparent, so trimming
                   pulls the cards up without touching the object. Trim too
                   far and it starts cutting into the object's bottom edge. */}
-            <motion.div
-              // Only when the intro is actually playing. Without the gate, a
-              // repeat visit resolves the phase in the reconciliation right
-              // after hydration — one commit measured at screen centre, the
-              // next in this column — and Motion would fly the core across the
-              // page on what should be an ordinary load.
-              // Position only, and only on the laptop split. Size is allowed to
-              // differ by breakpoint; interpolating width/height would stretch
-              // the WebGL canvas mid-flight. Below `lg` there is no fixed box
-              // to glide from, so layout stays off and the inner scale spring
-              // carries the entrance.
-              layout={intro && isLaptop ? "position" : false}
-              transition={RESOLVE}
-              data-boot="core"
-              className={cn(
-                "bg-transparent",
-                isCentred
-                  ? // Every beat before the resolve. `fixed` rather than
-                    // `absolute`: the brief is dead-centre of the *screen*, and
-                    // this section is taller than the viewport, so centring
-                    // inside it would put the core well below the fold. Nothing
-                    // here is interactive and the header sits at z-50, so it
-                    // stays clear of both.
-                    // `h-125` with no `lg:` override on purpose: the resting
-                    // box is 500px tall at every width, because its `min-h-125`
-                    // outranks its own `lg:h-110`. Matching that exactly keeps
-                    // the glide a translation rather than a 14% vertical
-                    // stretch of the canvas.
-                    "pointer-events-none fixed inset-0 z-30 m-auto h-125 w-[min(90vw,38rem)]"
-                  : "relative -mt-6 h-60 w-full sm:-mt-4 sm:h-64 lg:mt-0 lg:min-h-125 lg:h-110",
-              )}
-            >
-              {/* Hidden outright while the curtain is up rather than
+              <motion.div
+                ref={coreRef}
+                data-boot="core"
+                // Parking is instant and happens behind the curtain; only the
+                // resolve is a gesture anyone sees. Handing both directions the
+                // spring would send the core drifting to centre on the frame
+                // hydration works out the viewport is wide, which is a move with
+                // no motivation behind it.
+                initial={false}
+                animate={{
+                  x: isCentred ? centring.x : 0,
+                  y: isCentred ? centring.y : 0,
+                }}
+                transition={isCentred ? { duration: 0 } : RESOLVE}
+                className={cn(
+                  // One box in every phase. The centred pose is this same box
+                  // translated, so the canvas is never resized mid-flight and
+                  // Spline never re-frames the scene against a new camera box.
+                  // Below `lg` this is the object's own stage, clear of the copy.
+                  // It used to carry a negative top margin and a short box, which
+                  // was right when it sat directly under the headline and wrong
+                  // the moment the lead and the CTA moved above it — the object
+                  // rode up over the button.
+                  "relative mt-6 h-88 w-full bg-transparent sm:h-96 lg:mt-0 lg:h-110 lg:min-h-125",
+                  // Lifted over the copy only while it is away from its column.
+                  // Nothing here is interactive and the header sits at z-50.
+                  isCentred && "pointer-events-none z-30",
+                )}
+              >
+                {/* Hidden outright while the curtain is up rather than
                   unmounted: the scene streams in behind it, so the object is
                   already loaded and turning when the portal opens — and its
                   `onLoad` is one of the three signals the counter is waiting
                   on, which it could not be if this were mounted late. */}
-              <motion.div
-                className="relative h-full w-full"
-                initial={{ opacity: 0, scale: 0.7 }}
-                animate={{
-                  opacity: coreVisible ? 1 : 0,
-                  scale: !coreVisible ? 0.7 : isResolved ? 1 : 1.2,
-                }}
-                transition={phase === "core" ? CORE_IN : RESOLVE}
-              >
-                <div
-                  className={cn(
-                    "absolute inset-x-0 top-0 overflow-hidden",
-                    // Same canvas box in both poses so Spline does not re-frame
-                    // mid-glide. The upward nudge is resting-only: during the
-                    // centred core beat the object has to sit on the screen
-                    // midline, and the mobile crop that hugs the heading would
-                    // pull it off-centre if it stayed on.
-                    isCentred
-                      ? "h-125 lg:h-152"
-                      : "h-125 -translate-y-44 sm:-translate-y-36 lg:h-152 lg:-translate-y-30",
-                  )}
+                <motion.div
+                  className="relative h-full w-full"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{
+                    opacity: coreVisible ? 1 : 0,
+                    scale: !coreVisible ? 0.7 : isResolved ? 1 : 1.2,
+                  }}
+                  transition={phase === "core" ? CORE_IN : RESOLVE}
                 >
-                  <SplineScene
-                    scene={SPLINE_SCENE}
-                    label="Rotating abstract 3D form"
-                    className="absolute inset-x-0 top-0 h-[calc(100%+5rem)]"
-                    canvasClassName={SPLINE_FILTER}
-                    onReady={onSceneReady}
-                  />
-                </div>
+                  <div
+                    className={cn(
+                      "absolute inset-x-0 top-0 overflow-hidden",
+                      // Same canvas box in both poses so Spline does not re-frame
+                      // mid-glide. The upward nudge is resting-only: during the
+                      // centred core beat the object has to sit on the screen
+                      // midline, and the mobile crop that hugs the heading would
+                      // pull it off-centre if it stayed on.
+                      isCentred
+                        ? "h-125 lg:h-152"
+                        : "h-125 -translate-y-28 sm:-translate-y-24 lg:h-152 lg:-translate-y-30",
+                    )}
+                  >
+                    <SplineScene
+                      scene={SPLINE_SCENE}
+                      label="Rotating abstract 3D form"
+                      className="absolute inset-x-0 top-0 h-[calc(100%+5rem)]"
+                      canvasClassName={SPLINE_FILTER}
+                      onReady={onSceneReady}
+                    />
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          </div>
+            </div>
 
             {/* Stat cards. The overlapping side-by-side cluster only switches
                 on at `xl`: side by side the pair is ~550px wide, and this
@@ -421,7 +561,7 @@ export function Hero({ specialists }: HeroProps) {
                 which the second card would overflow it. Every width beneath
                 that stacks them instead.
 
-                On small screens these sit under the lead (order-4); at `lg`
+                On small screens these sit last, under the cube; at `lg`
                 they return under the scene in the right column.
 
                 While the core is centred this cluster sits alone at the top of
@@ -438,7 +578,7 @@ export function Hero({ specialists }: HeroProps) {
             <div
               key={isResolved ? "cards-revealed" : "cards-pending"}
               className={cn(
-                "order-4 mt-4 flex max-w-sm flex-col gap-5 lg:order-none xl:mt-10 xl:max-w-none xl:flex-row xl:items-start xl:gap-0",
+                "order-5 mt-4 flex max-w-sm flex-col gap-5 lg:order-none xl:mt-10 xl:max-w-none xl:flex-row xl:items-start xl:gap-0",
                 !isResolved && "opacity-0",
               )}
             >
@@ -450,7 +590,11 @@ export function Hero({ specialists }: HeroProps) {
                   className={`${GLASS} p-6`}
                 >
                   <p className="font-display text-ink text-4xl leading-none font-extrabold tracking-tight">
-                    <CountUp value={100} suffix="+" delay={DELAY.statOne + 0.2} />
+                    <CountUp
+                      value={100}
+                      suffix="+"
+                      delay={DELAY.statOne + 0.2}
+                    />
                   </p>
                   <p className="font-display text-ink-soft mt-3 text-[0.9375rem] leading-snug">
                     Projects delivered across 3 countries since {site.founded}.
@@ -490,7 +634,8 @@ export function Hero({ specialists }: HeroProps) {
                     />
                   </p>
                   <p className="font-display text-ink-soft mt-3 text-[0.9375rem] leading-snug">
-                    Specialists across strategy, design, engineering, and delivery.
+                    Specialists across strategy, design, engineering, and
+                    delivery.
                   </p>
 
                   <div className="mt-5 flex items-center gap-3">
