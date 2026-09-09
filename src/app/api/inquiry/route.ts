@@ -20,12 +20,36 @@ export const runtime = "nodejs";
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 /**
+ * The inboxes an inquiry is copied to, parsed from a comma-separated
+ * `INQUIRY_TO`.
+ *
+ * A single Resend call carries every recipient rather than one call each: the
+ * team then shares one thread instead of replying over each other in separate
+ * copies, and a partial failure cannot deliver to some inboxes but not others.
+ *
+ * Blank entries are dropped, so a trailing comma or a stray space while editing
+ * the variable is harmless rather than a rejected send.
+ */
+function recipients() {
+  const parsed = (process.env.INQUIRY_TO ?? site.email)
+    .split(",")
+    .map((address) => address.trim())
+    .filter(Boolean);
+
+  if (parsed.length === 0) {
+    throw new Error("INQUIRY_TO is set but lists no addresses.");
+  }
+
+  return parsed;
+}
+
+/**
  * Delivers a validated inquiry to the studio inbox via Resend.
  *
  * Both addresses are environment-driven so the destination can change without
- * a deploy of new code. `INQUIRY_FROM` must be on a domain verified in Resend —
- * until pixelportal.in is verified, Resend's shared `onboarding@resend.dev`
- * sender works but will only deliver to the Resend account owner.
+ * a deploy of new code. `INQUIRY_FROM` must sit on a domain verified in Resend;
+ * `INQUIRY_TO` takes a comma-separated list, so an inbox can be added or
+ * dropped from the rota by editing one variable.
  *
  * Throwing here is deliberate. The caller turns a throw into a 502 telling the
  * visitor to email us directly, which is the honest outcome: their message was
@@ -53,7 +77,7 @@ async function dispatch(inquiry: z.infer<typeof inquirySchema>) {
     },
     body: JSON.stringify({
       from: process.env.INQUIRY_FROM ?? "Pixel Portal <onboarding@resend.dev>",
-      to: [process.env.INQUIRY_TO ?? site.email],
+      to: recipients(),
       // The visitor's own address, so hitting reply in the inbox answers them
       // directly rather than starting a fresh mail.
       reply_to: inquiry.email,
