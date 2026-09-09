@@ -136,6 +136,58 @@ export interface Metric {
   label: string;
 }
 
+/**
+ * Figures for the two mock panels on a case study page.
+ *
+ * Those panels started as abstract skeletons — a wireframe browser and an
+ * unlabelled bar chart — which read as placeholders nobody had got round to
+ * finishing rather than as diagrams of anything. This gives them something to
+ * say.
+ *
+ * Invented, exactly like `metrics`, and covered by the same `MetricsNote` the
+ * page already carries above and below them. Two rules keep that honest. The
+ * address bar never shows a real hostname: a mock screen captioned with a live
+ * domain stops being a diagram and starts being a screenshot of a product
+ * nobody photographed. And the figures here are always secondary to the
+ * study's own `metrics` — supporting detail a screen of that kind would show,
+ * never a restatement of the headline claim in a second typeface.
+ */
+export interface CaseStudyEvidence {
+  /** The mock product surface. */
+  surface: {
+    /** Path in the mock address bar. A path, never a hostname. */
+    path: string;
+    heading: string;
+    stats: { value: string; label: string }[];
+  };
+  /** The mock chart. */
+  chart: {
+    title: string;
+    /** What the horizontal axis covers. */
+    period: string;
+    /** Vertical axis ticks: the top of the plot, then its midpoint. */
+    scale: [string, string];
+    /**
+     * Bar heights as percentages of the plot, left to right.
+     *
+     * Per study rather than shared, because the direction is the claim: a
+     * replatform that halves load times cannot be drawn with the same rising
+     * series as a campaign that triples inquiries.
+     */
+    bars: number[];
+    /**
+     * How many leading bars belong to the baseline rather than the series.
+     *
+     * Without it the legend was a lie: two swatches, one of them grey, over a
+     * plot whose bars were all the same colour. Splitting the run means the
+     * grey entry names something actually drawn.
+     */
+    split: number;
+    series: string;
+    baseline: string;
+  };
+}
+
 export interface ProcessStep {
   title: string;
   /** Optional for the same reason the other prose fields are — see above. */
@@ -199,6 +251,11 @@ export interface CaseStudy {
    * to show.
    */
   evidenceLayout?: "curated-grid";
+  /**
+   * Figures for the two mock panels. Absent for a study using a bespoke
+   * `evidenceLayout`, which has its own panels and does not render these.
+   */
+  evidence?: CaseStudyEvidence;
 }
 
 export interface NavItem {

@@ -8,10 +8,20 @@ import { TextReveal } from "@/components/motion/TextReveal";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { ArrowGlyph } from "@/components/ui/Button";
-import { Container, Eyebrow, MetricsNote, Section } from "@/components/ui/Layout";
+import {
+  Container,
+  Eyebrow,
+  MetricsNote,
+  Section,
+} from "@/components/ui/Layout";
+import { ClientMark } from "@/components/ui/ClientMark";
 import { getClientLogo } from "@/content/clients";
-import { getCaseStudies, getCaseStudy, getServicesBySlugs } from "@/lib/content";
-import type { Metric } from "@/types/content";
+import {
+  getCaseStudies,
+  getCaseStudy,
+  getServicesBySlugs,
+} from "@/lib/content";
+import type { CaseStudyEvidence, Metric } from "@/types/content";
 
 export const dynamicParams = false;
 
@@ -40,24 +50,61 @@ export async function generateMetadata({
 }
 
 /**
- * Abstract interface skeleton — chrome dots, a nav bar, a content grid, three
- * lines of body copy. Stands in for a real UI screenshot without pretending
- * to be one: nothing here claims to depict any client's actual product.
+ * A mock product surface.
+ *
+ * It was a pure skeleton: chrome dots, an empty nav bar, two grey blocks and
+ * three grey lines. That reads as a panel somebody forgot to finish rather than
+ * as a diagram of anything, which is what this one is here to be — so it now
+ * carries a heading and three readings of the kind the screen it stands for
+ * would actually show.
+ *
+ * The address bar holds a path and never a hostname. A mock captioned with a
+ * live domain stops being a diagram and becomes a screenshot of a product
+ * nobody photographed.
  */
-function WireframeInterface() {
+function SurfacePanel({ surface }: { surface?: CaseStudyEvidence["surface"] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-1.5">
         <span className="bg-hair h-2 w-2 rounded-full" />
         <span className="bg-hair h-2 w-2 rounded-full" />
         <span className="bg-hair h-2 w-2 rounded-full" />
-        <span className="border-hair ml-2 h-5 flex-1 rounded-full border" />
+        <span className="border-hair text-muted ml-2 flex h-5 flex-1 items-center rounded-full border px-2.5 text-[0.625rem]">
+          {surface?.path}
+        </span>
       </div>
-      <div className="border-hair rounded-card bg-brand-50 h-8 border" />
-      <div className="grid grid-cols-3 gap-3">
-        <div className="border-hair rounded-card bg-paper col-span-2 h-20 border" />
-        <div className="border-hair rounded-card bg-paper h-20 border" />
-      </div>
+
+      {surface ? (
+        <>
+          <p className="text-ink text-[0.9375rem] font-medium">
+            {surface.heading}
+          </p>
+          <dl className="grid grid-cols-3 gap-2.5">
+            {surface.stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="border-hair rounded-card bg-paper border p-3"
+              >
+                <dd className="font-display text-ink text-[1.125rem] leading-none font-semibold tabular-nums">
+                  {stat.value}
+                </dd>
+                <dt className="text-ink-soft mt-1.5 text-[0.6875rem] leading-snug">
+                  {stat.label}
+                </dt>
+              </div>
+            ))}
+          </dl>
+        </>
+      ) : (
+        <>
+          <div className="border-hair rounded-card bg-brand-50 h-8 border" />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="border-hair rounded-card bg-paper col-span-2 h-20 border" />
+            <div className="border-hair rounded-card bg-paper h-20 border" />
+          </div>
+        </>
+      )}
+
       <div className="space-y-2">
         <div className="bg-hair h-2 w-full rounded-full" />
         <div className="bg-hair h-2 w-4/5 rounded-full" />
@@ -67,30 +114,81 @@ function WireframeInterface() {
   );
 }
 
-/** Abstract chart skeleton — bars plus a two-item legend, no invented figures. */
-function WireframeMetrics() {
-  const bars = [42, 68, 52, 84, 60, 92, 74];
+/** The plot's default shape, for a study with no figures of its own yet. */
+const FALLBACK_BARS = [42, 68, 52, 84, 60, 92, 74];
+
+/**
+ * A mock chart.
+ *
+ * The bars were unlabelled, which left the panel saying only "a chart went
+ * here". It now has a title, an axis and a period, and takes its series from
+ * the study — the direction is the claim, so a replatform that halves load
+ * times gets a falling plot rather than the one rising series shared by
+ * everything else.
+ */
+function ChartPanel({ chart }: { chart?: CaseStudyEvidence["chart"] }) {
+  const bars = chart?.bars ?? FALLBACK_BARS;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex h-28 items-end gap-2.5">
-        {bars.map((height, index) => (
-          <span
-            key={index}
-            aria-hidden
-            className="bg-brand-200 flex-1 rounded-t-md"
-            style={{ height: `${height}%` }}
-          />
-        ))}
+      {chart && (
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="text-ink text-[0.9375rem] font-medium">{chart.title}</p>
+          <p className="text-muted text-[0.75rem]">{chart.period}</p>
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        {chart && (
+          // The axis. Its two labels sit on the gridlines they measure, so the
+          // top one aligns with the plot's ceiling rather than floating above
+          // it.
+          <div className="text-muted relative w-9 shrink-0 text-right text-[0.625rem] tabular-nums">
+            <span className="absolute top-0 right-0 -translate-y-1/2">
+              {chart.scale[0]}
+            </span>
+            <span className="absolute top-1/2 right-0 -translate-y-1/2">
+              {chart.scale[1]}
+            </span>
+          </div>
+        )}
+
+        <div className="relative flex-1">
+          {chart && (
+            <>
+              <span className="bg-hair/70 absolute inset-x-0 top-0 h-px" />
+              <span className="bg-hair/70 absolute inset-x-0 top-1/2 h-px" />
+            </>
+          )}
+          <div className="relative flex h-28 items-end gap-2.5">
+            {bars.map((height, index) => (
+              <span
+                key={index}
+                aria-hidden
+                className={
+                  index < (chart?.split ?? 0)
+                    ? "bg-hair flex-1 rounded-t-md"
+                    : "bg-brand-200 flex-1 rounded-t-md"
+                }
+                style={{ height: `${height}%` }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
+
       <div className="border-hair flex items-center justify-between border-t pt-4">
         <div className="flex items-center gap-2">
           <span className="bg-brand-500 h-2.5 w-2.5 rounded-full" />
-          <span className="text-ink-soft text-[0.75rem]">Engagement</span>
+          <span className="text-ink-soft text-[0.75rem]">
+            {chart?.series ?? "Engagement"}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="bg-hair h-2.5 w-2.5 rounded-full" />
-          <span className="text-ink-soft text-[0.75rem]">Baseline</span>
+          <span className="text-ink-soft text-[0.75rem]">
+            {chart?.baseline ?? "Baseline"}
+          </span>
         </div>
       </div>
     </div>
@@ -118,13 +216,15 @@ function CuratedGridCard() {
       </div>
 
       <div className="mt-5 grid grid-cols-3 gap-1">
-        {GRID_SWATCHES.concat(GRID_SWATCHES, GRID_SWATCHES).map((swatch, index) => (
-          <div
-            key={index}
-            aria-hidden
-            className={`aspect-square transition-opacity duration-300 hover:opacity-80 ${swatch}`}
-          />
-        ))}
+        {GRID_SWATCHES.concat(GRID_SWATCHES, GRID_SWATCHES).map(
+          (swatch, index) => (
+            <div
+              key={index}
+              aria-hidden
+              className={`aspect-square transition-opacity duration-300 hover:opacity-80 ${swatch}`}
+            />
+          ),
+        )}
       </div>
     </div>
   );
@@ -181,7 +281,9 @@ function InquiryPipelineCard({ metric }: { metric?: Metric }) {
  * get a dedicated evidence bento before the page loops into the next study —
  * nothing here dead-ends on a "the end" footer.
  */
-export default async function CaseStudyPage({ params }: PageProps<"/case-studies/[slug]">) {
+export default async function CaseStudyPage({
+  params,
+}: PageProps<"/case-studies/[slug]">) {
   const { slug } = await params;
   const study = await getCaseStudy(slug);
   if (!study) notFound();
@@ -213,10 +315,8 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
 
             {logo && (
               <Reveal delay={0.12} className="mt-10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <ClientMark
                   src={logo}
-                  alt={study.client}
                   className="mx-auto h-9 w-auto max-w-40 object-contain"
                 />
               </Reveal>
@@ -237,19 +337,31 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
               {study.title}
             </TextReveal>
 
-            <Reveal delay={0.4} className="border-hair mb-16 mt-10 border-t pt-8">
+            <Reveal
+              delay={0.4}
+              className="border-hair mb-16 mt-10 border-t pt-8"
+            >
               <dl className="flex flex-wrap items-start justify-center gap-x-10 gap-y-5">
                 <div>
-                  <dt className="text-eyebrow text-muted uppercase">Industry</dt>
+                  <dt className="text-eyebrow text-muted uppercase">
+                    Industry
+                  </dt>
                   <dd className="text-ink mt-1.5 max-w-[28ch] text-[0.9375rem] font-medium">
                     {study.industry}
                   </dd>
                 </div>
-                <span aria-hidden className="bg-hair mt-1 hidden h-8 w-px sm:block" />
+                <span
+                  aria-hidden
+                  className="bg-hair mt-1 hidden h-8 w-px sm:block"
+                />
                 <div>
-                  <dt className="text-eyebrow text-muted uppercase">Services</dt>
+                  <dt className="text-eyebrow text-muted uppercase">
+                    Services
+                  </dt>
                   <dd className="text-ink mt-1.5 max-w-[28ch] text-[0.9375rem] font-medium">
-                    {services.map((service) => service.navTitle ?? service.title).join(", ")}
+                    {services
+                      .map((service) => service.navTitle ?? service.title)
+                      .join(", ")}
                   </dd>
                 </div>
               </dl>
@@ -272,7 +384,11 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
                     </p>
                   </Reveal>
 
-                  <Reveal y={0} delay={0.05} className="border-hair mt-8 border-t pt-8">
+                  <Reveal
+                    y={0}
+                    delay={0.05}
+                    className="border-hair mt-8 border-t pt-8"
+                  >
                     <Eyebrow>The solution</Eyebrow>
                     <ul className="mt-4 space-y-3">
                       {study.approach.map((item) => (
@@ -290,7 +406,11 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
                     </ul>
                   </Reveal>
 
-                  <Reveal y={0} delay={0.1} className="border-hair mt-8 border-t pt-8">
+                  <Reveal
+                    y={0}
+                    delay={0.1}
+                    className="border-hair mt-8 border-t pt-8"
+                  >
                     <Eyebrow>The results</Eyebrow>
                     <dl className="mt-4 space-y-3">
                       {study.metrics.map((metric) => (
@@ -314,7 +434,9 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
                 </div>
 
                 <div className="mt-8">
-                  <p className="text-eyebrow text-muted uppercase">Capabilities applied</p>
+                  <p className="text-eyebrow text-muted uppercase">
+                    Capabilities applied
+                  </p>
                   <ul className="mt-3 flex flex-wrap gap-2">
                     {services.map((service) => (
                       <li key={service.slug}>
@@ -334,16 +456,23 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
             <div className="lg:col-span-8">
               <RevealGroup className="space-y-6" stagger={0.1}>
                 <RevealItem>
-                  <p className="text-ink-soft text-xl leading-relaxed">{study.summary}</p>
+                  <p className="text-ink-soft text-xl leading-relaxed">
+                    {study.summary}
+                  </p>
                 </RevealItem>
                 {study.approach.map((item) => (
                   <RevealItem key={item}>
-                    <p className="text-ink-soft text-xl leading-relaxed">{item}</p>
+                    <p className="text-ink-soft text-xl leading-relaxed">
+                      {item}
+                    </p>
                   </RevealItem>
                 ))}
               </RevealGroup>
 
-              <RevealGroup className="mt-12 grid gap-6 sm:grid-cols-2" stagger={0.1}>
+              <RevealGroup
+                className="mt-12 grid gap-6 sm:grid-cols-2"
+                stagger={0.1}
+              >
                 {study.evidenceLayout === "curated-grid" ? (
                   <>
                     <RevealItem>
@@ -351,7 +480,9 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
                     </RevealItem>
                     <RevealItem>
                       <InquiryPipelineCard
-                        metric={study.metrics.find((metric) => metric.suffix === "x")}
+                        metric={study.metrics.find(
+                          (metric) => metric.suffix === "x",
+                        )}
                       />
                     </RevealItem>
                   </>
@@ -359,12 +490,12 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
                   <>
                     <RevealItem>
                       <FloatPanel playing={false} className="h-full p-8">
-                        <WireframeInterface />
+                        <SurfacePanel surface={study.evidence?.surface} />
                       </FloatPanel>
                     </RevealItem>
                     <RevealItem>
                       <FloatPanel playing={false} className="h-full p-8">
-                        <WireframeMetrics />
+                        <ChartPanel chart={study.evidence?.chart} />
                       </FloatPanel>
                     </RevealItem>
                   </>
@@ -382,12 +513,19 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
             <Eyebrow>By the numbers</Eyebrow>
           </Reveal>
 
-          <RevealGroup className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4" stagger={0.08}>
+          <RevealGroup
+            className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4"
+            stagger={0.08}
+          >
             {study.metrics.map((metric) => (
               <RevealItem key={metric.label}>
                 <FloatPanel playing={false} className="h-full p-8">
                   <p className="font-display text-brand-600 text-[clamp(2rem,4vw,2.75rem)] leading-none font-semibold tabular-nums">
-                    <CountUp value={metric.value} prefix={metric.prefix} suffix={metric.suffix} />
+                    <CountUp
+                      value={metric.value}
+                      prefix={metric.prefix}
+                      suffix={metric.suffix}
+                    />
                   </p>
                   <p className="text-ink-soft mt-3 text-[0.875rem] leading-snug">
                     {metric.label}
@@ -410,7 +548,9 @@ export default async function CaseStudyPage({ params }: PageProps<"/case-studies
               className="group flex flex-col items-start justify-between gap-6 py-6 sm:flex-row sm:items-center"
             >
               <div>
-                <p className="text-eyebrow text-muted uppercase">Next case study</p>
+                <p className="text-eyebrow text-muted uppercase">
+                  Next case study
+                </p>
                 <h2 className="font-display text-h2 text-ink group-hover:text-brand-800 mt-3 font-semibold transition-colors">
                   {next.client} — {next.title}
                 </h2>
