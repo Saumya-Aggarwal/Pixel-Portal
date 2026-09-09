@@ -371,7 +371,7 @@ export default async function CaseStudyPage({
       </Section>
 
       {/* ---- The 4/8 split ---- */}
-      <Section spacing="base" className="border-hair border-t">
+      <Section spacing="base" divider>
         <Container wide>
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-4">
@@ -507,7 +507,7 @@ export default async function CaseStudyPage({
       </Section>
 
       {/* ---- Evidence bento ---- */}
-      <Section spacing="base">
+      <Section spacing="base" divider>
         <Container wide>
           <Reveal y={0}>
             <Eyebrow>By the numbers</Eyebrow>
@@ -540,7 +540,7 @@ export default async function CaseStudyPage({
       </Section>
 
       {/* ---- The continuous loop ---- */}
-      <Section spacing="tight" className="border-hair border-t">
+      <Section spacing="tight" divider>
         <Container wide>
           <Reveal y={0}>
             <Link

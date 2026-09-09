@@ -61,7 +61,7 @@ export default async function AboutPage() {
       />
 
       {/* ---- Vision ---- */}
-      <Section spacing="base">
+      <Section spacing="base" divider>
         <Container wide>
           <div className="grid grid-cols-12 gap-y-12 lg:gap-x-16">
             <div className="col-span-12 lg:col-span-5">
@@ -106,7 +106,7 @@ export default async function AboutPage() {
       <TrustPanel clients className="bg-paper" />
 
       {/* ---- The bench ---- */}
-      <Section spacing="base" id="team">
+      <Section spacing="base" id="team" divider>
         <Container wide>
           <div className="grid grid-cols-12 items-end gap-y-8">
             <div className="col-span-12 lg:col-span-7">
@@ -137,7 +137,7 @@ export default async function AboutPage() {
       </Section>
 
       {/* ---- Values ---- */}
-      <Section spacing="base">
+      <Section spacing="base" divider>
         <Container wide>
           <Reveal y={0}>
             <Eyebrow>How we operate</Eyebrow>
@@ -161,7 +161,7 @@ export default async function AboutPage() {
       </Section>
 
       {/* ---- Careers ---- */}
-      <Section spacing="base" className="bg-paper">
+      <Section spacing="base" className="bg-paper" divider>
         <Container wide>
           <div className="grid grid-cols-12 items-center gap-y-8">
             <div className="col-span-12 lg:col-span-8">

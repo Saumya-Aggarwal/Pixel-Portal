@@ -45,7 +45,7 @@ export function TrustPanel({
   ];
 
   return (
-    <Section spacing="base" className={className}>
+    <Section spacing="base" className={className} divider>
       <Container wide>
         <Reveal y={0}>
           <div className="border-hair rounded-panel relative overflow-hidden border bg-white/70 backdrop-blur-sm">

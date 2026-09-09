@@ -15,7 +15,7 @@ export async function ServicePillars() {
   const categories = await getCategories();
 
   return (
-    <Section spacing="loose">
+    <Section spacing="loose" divider>
       <Container wide>
         <div className="grid grid-cols-12 items-end gap-y-8">
           <div className="col-span-12 lg:col-span-7">

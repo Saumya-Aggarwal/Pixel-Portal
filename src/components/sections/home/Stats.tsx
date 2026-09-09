@@ -10,7 +10,7 @@ import { stats } from "@/content/site";
  */
 export function Stats() {
   return (
-    <Section spacing="base">
+    <Section spacing="base" divider>
       <Container wide>
         <StatRail items={stats} size="lg" align="center" />
       </Container>

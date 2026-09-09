@@ -99,7 +99,7 @@ export default async function CategoryPage({
       </PageHero>
 
       {/* ---- Sub-service grid ---- */}
-      <Section spacing="base" id="services">
+      <Section spacing="base" id="services" divider>
         <Container wide>
           <div className="grid grid-cols-12 items-end gap-y-6">
             <div className="col-span-12 lg:col-span-7">
@@ -184,7 +184,7 @@ export default async function CategoryPage({
       </Section>
 
       {/* ---- Credibility strip ---- */}
-      <Section spacing="base" className="bg-paper">
+      <Section spacing="base" className="bg-paper" divider>
         <Container wide>
           <Reveal y={0}>
             <Eyebrow>How we work</Eyebrow>

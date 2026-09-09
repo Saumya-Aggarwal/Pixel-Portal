@@ -21,7 +21,7 @@ export function CtaSection({
   primaryLabel?: string;
 }) {
   return (
-    <Section spacing="loose" className="relative">
+    <Section spacing="loose" className="relative" divider>
       {/* The clip lives on this layer rather than on the section itself, so
           the bloom's overhang is contained without the section box itself
           becoming a clipping context for anything placed on its edges. */}

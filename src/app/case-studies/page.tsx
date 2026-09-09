@@ -62,7 +62,7 @@ export default async function CaseStudiesPage() {
         ]}
       />
 
-      <Section spacing="base">
+      <Section spacing="base" divider>
         <Container wide>
           <RevealGroup
             className="grid grid-cols-1 gap-8 lg:grid-cols-12"

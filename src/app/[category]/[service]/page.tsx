@@ -88,7 +88,7 @@ export default async function ServicePage({ params }: PageProps<"/[category]/[se
       </PageHero>
 
       {/* ---- Deliverables (base template — every service gets this) ---- */}
-      <Section spacing="base">
+      <Section spacing="base" divider>
         <Container wide>
           <div className="grid grid-cols-12 gap-y-10 lg:gap-x-16">
             <div className="col-span-12 lg:col-span-4">
@@ -135,7 +135,7 @@ export default async function ServicePage({ params }: PageProps<"/[category]/[se
 
       {/* ---- Related work ---- */}
       {related.length > 0 && (
-        <Section spacing="base" className="bg-paper">
+        <Section spacing="base" className="bg-paper" divider>
           <Container wide>
             <Reveal y={0}>
               <Eyebrow>Related work</Eyebrow>

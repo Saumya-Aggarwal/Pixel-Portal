@@ -44,7 +44,7 @@ export async function FeaturedWork() {
   ];
 
   return (
-    <Section spacing="loose" className="bg-paper">
+    <Section spacing="loose" className="bg-paper" divider>
       <Container wide>
         <div className="grid grid-cols-12 items-end gap-y-8">
           <div className="col-span-12 lg:col-span-8">
