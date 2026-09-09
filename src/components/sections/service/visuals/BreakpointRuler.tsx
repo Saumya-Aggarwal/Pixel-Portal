@@ -1,18 +1,27 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, type Transition } from "motion/react";
 
 import { Backlight } from "@/components/sections/service/visuals/chrome/Backlight";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { BreakpointRulerPhone } from "@/components/sections/service/visuals/BreakpointRulerPhone";
+import {
+  CARDS,
+  CTA,
+  HERO_TITLE,
+  LOOP,
+  NAV_LINKS,
+  TIMES,
+  swing,
+} from "@/components/sections/service/visuals/breakpointRulerShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -44,10 +53,23 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * times, so the frame is visibly shrinking *within a range* rather than just
  * getting small, and the canvas still has structure in it during the beats the
  * frame spends narrow.
+ *
+ * The phone stage turns the scale into a set of stops; see
+ * `BreakpointRulerPhone` for why.
  */
 
-const LOOP = 14;
-const at = (seconds: number) => beat(seconds, LOOP);
+export function BreakpointRuler() {
+  return (
+    <>
+      <div className="md:hidden">
+        <BreakpointRulerPhone />
+      </div>
+      <div className="hidden md:block">
+        <BreakpointRulerDesktop />
+      </div>
+    </>
+  );
+}
 
 /** Shared origin and scale. Every horizontal number below derives from these. */
 const ORIGIN_X = 60;
@@ -102,20 +124,36 @@ const LAYOUT = {
   },
 };
 
-const CARDS = ["Performance", "Scalability", "Security"];
-
-/** Desktop, hold, tablet, hold, mobile, hold, straight back. */
-const TIMES = [0, at(2.5), at(4), at(6), at(7.5), at(10), at(12), 1];
-const EASE = "easeInOut" as const;
-
-const swing = <T,>(d: T, t: T, m: T): T[] => [d, d, t, t, m, m, d, d];
 const swingCq = (d: number, t: number, m: number) => swing(d, t, m).map(cq);
 
-export function BreakpointRuler() {
+/**
+ * One easing per hop, not one for the sequence.
+ *
+ * A bare `ease` beside `times` is handed to WAAPI as the easing of the whole
+ * effect, which remaps the loop's clock and lands every offset somewhere else.
+ * The holds take `linear`, since a hold between two identical values has no
+ * curve to have.
+ */
+const EASE_PER_HOP = [
+  "linear",
+  "easeInOut",
+  "linear",
+  "easeInOut",
+  "linear",
+  "easeInOut",
+  "linear",
+] as const;
+
+function BreakpointRulerDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
-  const loop = playing
-    ? { duration: LOOP, times: TIMES, repeat: Infinity, ease: EASE }
+  const loop: Transition | undefined = playing
+    ? {
+        duration: LOOP,
+        times: TIMES,
+        repeat: Infinity,
+        ease: [...EASE_PER_HOP],
+      }
     : undefined;
 
   return (
@@ -242,7 +280,7 @@ export function BreakpointRuler() {
             animate={playing ? { opacity: swing(1, 1, 0) } : { opacity: 0 }}
             transition={loop}
           >
-            {["About", "Services", "Contact"].map((link) => (
+            {NAV_LINKS.map((link) => (
               <span
                 key={link}
                 className="text-ink-soft"
@@ -280,18 +318,22 @@ export function BreakpointRuler() {
             className="font-display text-ink text-center font-semibold tracking-tight"
             style={{ fontSize: ts(20) }}
           >
-            Enterprise Software
+            {HERO_TITLE}
           </span>
+          {/* Sized from the label, not to a fixed width. `ts` floors at 10px,
+              so "Book a demo" is 58px whatever the canvas does, while 104 units
+              is 82px at 1440 and 38 at the breakpoint this component starts
+              rendering at — where the label was breaking out of its own pill. */}
           <span
-            className="bg-brand-600 grid place-items-center rounded-full font-medium text-white"
+            className="bg-brand-600 grid place-items-center rounded-full font-medium whitespace-nowrap text-white"
             style={{
               height: cq(28),
-              width: cq(104),
+              padding: `0 ${cq(18)}`,
               fontSize: ts(10),
               marginTop: cq(14),
             }}
           >
-            Book a demo
+            {CTA}
           </span>
         </Box>
 
@@ -379,7 +421,12 @@ function Box({
       }
       transition={
         playing
-          ? { duration: LOOP, times: TIMES, repeat: Infinity, ease: EASE }
+          ? {
+              duration: LOOP,
+              times: TIMES,
+              repeat: Infinity,
+              ease: [...EASE_PER_HOP],
+            }
           : undefined
       }
     >

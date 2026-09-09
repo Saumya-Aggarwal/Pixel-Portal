@@ -13,6 +13,12 @@ import {
   useScrubPlayhead,
   useStopIndex,
 } from "@/components/sections/category/useScrubPlayhead";
+import { ArcDialPhone } from "@/components/sections/category/ArcDialPhone";
+import {
+  SPEC_ROWS,
+  STATIONS,
+  hrefFor,
+} from "@/components/sections/category/arcDialShared";
 import { createCanvas } from "@/components/sections/service/visuals/canvas";
 
 /**
@@ -41,11 +47,15 @@ import { createCanvas } from "@/components/sections/service/visuals/canvas";
  *
  * The order was arbitrary and is now a scope ladder, with e-commerce at the apex
  * because the apex is the dominant position and the page is headed "commercial
- * weight".
+ * weight". It lives in `arcDialShared` now, since the phone stage reads it in
+ * the same order without an apex to justify it.
  *
  * The narrow stop drew a 320-wide column inside a 912-wide window and called the
  * remaining 592 units negative space. Three width columns fill it instead, which
  * is also a truer picture of what that service does.
+ *
+ * Below `md` none of this survives a 360-wide column, and `ArcDialPhone` takes
+ * over with a stepper over the same window.
  */
 
 const { W, H, px, py, ts, cq } = createCanvas(1440, 720);
@@ -61,44 +71,6 @@ const point = (deg: number) => {
   return { x: ARC.cx + ARC.rx * Math.cos(r), y: ARC.cy + ARC.ry * Math.sin(r) };
 };
 
-/**
- * A scope ladder, left to right. The apex carries e-commerce rather than the
- * simplest offering: it is the position the eye lands on first, and the page is
- * arguing about commercial weight.
- */
-const STATIONS = [
-  {
-    slug: "informative-corporate-sites",
-    title: "Corporate Sites",
-    lines: ["Component system", "CMS integration", "SEO foundations"],
-    stat: ["Templates", "12"],
-  },
-  {
-    slug: "ui-ux-mobile-optimization",
-    title: "UI/UX & Mobile",
-    lines: ["Responsive reflow", "Touch targets", "CSS refactor"],
-    stat: ["Breakpoints", "4"],
-  },
-  {
-    slug: "ecommerce-platforms",
-    title: "E-Commerce",
-    lines: ["Stripe gateway", "ERP sync", "Cart state"],
-    stat: ["SKUs", "1,200"],
-  },
-  {
-    slug: "headless-architecture",
-    title: "Headless",
-    lines: ["Content API", "Next.js surfaces", "Edge caching"],
-    stat: ["Surfaces", "3"],
-  },
-  {
-    slug: "listing-sites-marketplaces",
-    title: "Marketplaces",
-    lines: ["Two-sided auth", "Vendor payouts", "Faceted search"],
-    stat: ["Vendors", "480"],
-  },
-];
-
 const STEP = (ARC.to - ARC.from) / (STATIONS.length - 1);
 const angleAt = (i: number) => ARC.from + i * STEP;
 
@@ -106,44 +78,6 @@ const start = point(ARC.from);
 const end = point(ARC.to);
 /** 140° of sweep, so never a large arc; left to right over the top is clockwise. */
 const ARC_D = `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${ARC.rx} ${ARC.ry} 0 0 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
-
-/**
- * TODO(content): illustrative figures.
- *
- * Ordered to the scope ladder above, not to the blueprint's own ordering. A
- * column is 115 units — about 88px once rendered — so every value is checked to
- * fit at 10px rather than trusted to.
- */
-const SPEC_ROWS = [
-  {
-    label: "Architecture",
-    values: ["Editorial", "Responsive", "Funnel", "Decoupled", "Two-sided"],
-  },
-  {
-    label: "Tooling",
-    values: [
-      "Sanity CMS",
-      "CSS refactor",
-      "Stripe / ERP",
-      "Content API",
-      "KYC / payouts",
-    ],
-  },
-  {
-    label: "Scale",
-    values: [
-      "10–50 pages",
-      "4 breakpoints",
-      "10k+ SKUs",
-      "Omnichannel",
-      "100k+ rows",
-    ],
-  },
-  {
-    label: "Performance",
-    values: ["Sub-20ms", "99/100 LCP", "Sub-50ms", "Edge renders", "Real-time"],
-  },
-];
 
 const MAGNET_RADIUS = 150;
 const MAGNET_PULL = 8;
@@ -153,6 +87,19 @@ const BODY = { w: WINDOW.w, h: WINDOW.h - CHROME_H };
 const PAD = 20;
 
 export function ArcDial() {
+  return (
+    <>
+      <div className="md:hidden">
+        <ArcDialPhone />
+      </div>
+      <div className="hidden md:block">
+        <ArcDialDesktop />
+      </div>
+    </>
+  );
+}
+
+function ArcDialDesktop() {
   const {
     ref,
     t,
@@ -420,7 +367,7 @@ function Station({
       onPointerLeave={onLeave}
     >
       <Link
-        href={`/website-development/${station.slug}`}
+        href={hrefFor(station.slug)}
         // Named explicitly rather than left to its own contents: without this
         // the accessible name is the whole card read out, index number and stat
         // included — "01 Corporate Sites Component system … Templates 12".
@@ -745,7 +692,10 @@ function Headless() {
           ].map((line) => (
             <span
               key={line}
-              className="text-ink-soft truncate"
+              // `whitespace-pre`, so the two-space indent survives: HTML
+              // collapses it otherwise and the body renders flush left, which
+              // is a picture of a JSON document rather than one.
+              className="text-ink-soft overflow-hidden whitespace-pre"
               style={{ fontSize: ts(11) }}
             >
               {line}

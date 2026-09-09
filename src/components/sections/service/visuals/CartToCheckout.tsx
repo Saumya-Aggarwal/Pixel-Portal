@@ -9,6 +9,31 @@ import { CalloutChip } from "@/components/sections/service/visuals/chrome/Callou
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
 import { cq, px, py, ts } from "@/components/sections/service/visuals/canvas";
+import { CartToCheckoutPhone } from "@/components/sections/service/visuals/CartToCheckoutPhone";
+import {
+  BEATS,
+  CART_TOTAL,
+  CHECKOUT_FIELDS,
+  CHECKOUT_TITLE,
+  CHOSEN,
+  CartGlyph,
+  EMPTY_CART,
+  GATEWAY,
+  INVENTORY_LABEL,
+  IN_CART,
+  ORDER_ID,
+  PAID_TITLE,
+  PRODUCTS,
+  SESSIONS,
+  SESSIONS_LABEL,
+  SHEET_UP,
+  STOCK_HELD,
+  STOCK_SOLD,
+  STOREFRONT,
+  TOTAL_LABEL,
+  URL,
+  type Beat,
+} from "@/components/sections/service/visuals/cartCheckoutShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -28,22 +53,25 @@ import { EASE } from "@/lib/motion";
  *
  * A state machine rather than a loop: beats are discrete, hold for different
  * lengths, and change what is on screen.
+ *
+ * The phone stage keeps the browser and turns the checkout into a bottom sheet;
+ * see `CartToCheckoutPhone` for why.
  */
 
-const BEATS = [
-  { id: "browse", hold: 2.2 },
-  { id: "added", hold: 1.6 },
-  { id: "checkout", hold: 2.4 },
-  { id: "paid", hold: 3.6 },
-  { id: "reset", hold: 1.0 },
-] as const;
-
-type Beat = (typeof BEATS)[number]["id"];
-
-const SHEET_UP = new Set<Beat>(["checkout", "paid"]);
-const IN_CART = new Set<Beat>(["added", "checkout", "paid"]);
-
 export function CartToCheckout() {
+  return (
+    <>
+      <div className="md:hidden">
+        <CartToCheckoutPhone />
+      </div>
+      <div className="hidden md:block">
+        <CartToCheckoutDesktop />
+      </div>
+    </>
+  );
+}
+
+function CartToCheckoutDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
   const [step, setStep] = useState(0);
 
@@ -81,7 +109,7 @@ export function CartToCheckout() {
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.9, ease: EASE.out }}
       >
-        <BrowserChrome url="shop.example.com" className="h-full">
+        <BrowserChrome url={URL} className="h-full">
           <div className="relative h-full">
             <div
               className="border-hair flex items-center justify-between border-b"
@@ -91,7 +119,7 @@ export function CartToCheckout() {
                 className="text-ink font-medium"
                 style={{ fontSize: ts(13) }}
               >
-                Storefront
+                {STOREFRONT}
               </span>
               <span className="flex items-center" style={{ gap: ts(8) }}>
                 <CartGlyph />
@@ -103,7 +131,7 @@ export function CartToCheckout() {
                   }
                   style={{ fontSize: ts(12) }}
                 >
-                  {IN_CART.has(beat) ? "$299.00" : "$0.00"}
+                  {IN_CART.has(beat) ? CART_TOTAL : EMPTY_CART}
                 </span>
               </span>
             </div>
@@ -116,11 +144,11 @@ export function CartToCheckout() {
                   gap: cq(14),
                 }}
               >
-                {[0, 1, 2].map((i) => {
-                  const chosen = i === 1;
+                {PRODUCTS.map((product, i) => {
+                  const chosen = i === CHOSEN;
                   return (
                     <div
-                      key={i}
+                      key={product.name}
                       className="border-hair overflow-hidden rounded-lg border bg-white"
                       style={{
                         borderColor:
@@ -146,13 +174,13 @@ export function CartToCheckout() {
                           className="text-ink truncate"
                           style={{ fontSize: ts(11) }}
                         >
-                          {chosen ? "Noise-Cancelling…" : "Headphone Stand"}
+                          {product.name}
                         </span>
                         <span
                           className="text-ink-soft tabular-nums"
                           style={{ fontSize: ts(11) }}
                         >
-                          {chosen ? "$299.00" : i === 0 ? "$49.00" : "$79.00"}
+                          {product.price}
                         </span>
                         <span
                           className={
@@ -193,17 +221,13 @@ export function CartToCheckout() {
                     }
                     style={{ fontSize: ts(15) }}
                   >
-                    {sold ? "Order confirmed" : "Checkout"}
+                    {sold ? PAID_TITLE : CHECKOUT_TITLE}
                   </p>
 
                   <div
                     style={{ display: "grid", gap: cq(10), marginTop: ts(16) }}
                   >
-                    {[
-                      ["Email", "ana@example.com"],
-                      ["Card", "•••• 4242"],
-                      ["Ship to", "Gurgaon, IN"],
-                    ].map(([label, value]) => (
+                    {CHECKOUT_FIELDS.map(([label, value]) => (
                       <div
                         key={label}
                         className="border-hair rounded-md border"
@@ -233,13 +257,13 @@ export function CartToCheckout() {
                       className="text-ink-soft"
                       style={{ fontSize: ts(11) }}
                     >
-                      Total
+                      {TOTAL_LABEL}
                     </span>
                     <span
                       className="text-ink font-semibold tabular-nums"
                       style={{ fontSize: ts(13) }}
                     >
-                      $299.00
+                      {CART_TOTAL}
                     </span>
                   </div>
 
@@ -256,7 +280,7 @@ export function CartToCheckout() {
                       className="text-muted tabular-nums"
                       style={{ fontSize: ts(10), marginTop: ts(10) }}
                     >
-                      #PX-40917
+                      {ORDER_ID}
                     </p>
                   )}
                 </motion.div>
@@ -282,14 +306,13 @@ export function CartToCheckout() {
         }}
       >
         <span className="text-ink-soft" style={{ fontSize: ts(12) }}>
-          Active Sessions
+          {SESSIONS_LABEL}
         </span>
-        {/* TODO(content): illustrative figures. */}
         <span
           className="font-display text-ink leading-none font-semibold tracking-tight tabular-nums"
           style={{ fontSize: ts(24), marginTop: ts(10) }}
         >
-          12,450
+          {SESSIONS}
         </span>
       </FloatPanel>
 
@@ -297,7 +320,7 @@ export function CartToCheckout() {
         className="absolute"
         style={{ left: px(640), top: py(276), zIndex: 30 }}
       >
-        <CalloutChip style={{ fontSize: ts(11) }}>Stripe / v1</CalloutChip>
+        <CalloutChip style={{ fontSize: ts(11) }}>{GATEWAY}</CalloutChip>
       </div>
 
       <FloatPanel
@@ -315,7 +338,7 @@ export function CartToCheckout() {
         }}
       >
         <span className="text-ink-soft" style={{ fontSize: ts(12) }}>
-          Live Inventory
+          {INVENTORY_LABEL}
         </span>
         <motion.span
           className="font-display text-brand-600 leading-none font-semibold tracking-tight tabular-nums"
@@ -325,27 +348,9 @@ export function CartToCheckout() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, ease: EASE.out }}
         >
-          {sold ? "399" : "400"}
+          {sold ? STOCK_SOLD : STOCK_HELD}
         </motion.span>
       </FloatPanel>
     </div>
-  );
-}
-
-function CartGlyph() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      className="text-ink-soft"
-    >
-      <path d="M3 4h2l2.4 10.4A2 2 0 0 0 9.35 16h7.9a2 2 0 0 0 1.95-1.55L21 7H6" />
-      <circle cx="10" cy="20" r="1" />
-      <circle cx="18" cy="20" r="1" />
-    </svg>
   );
 }

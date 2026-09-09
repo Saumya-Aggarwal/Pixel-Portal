@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, type Transition } from "motion/react";
 import { useState } from "react";
 
 import { CountUp } from "@/components/motion/CountUp";
@@ -8,14 +8,25 @@ import { Backlight } from "@/components/sections/service/visuals/chrome/Backligh
 import { CalloutChip } from "@/components/sections/service/visuals/chrome/Callout";
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
+import { H, W, px, py, ts } from "@/components/sections/service/visuals/canvas";
+import { LiveDashboardPhone } from "@/components/sections/service/visuals/LiveDashboardPhone";
 import {
-  H,
-  W,
-  beat,
-  px,
-  py,
-  ts,
-} from "@/components/sections/service/visuals/canvas";
+  ATTRIBUTED,
+  CALLOUT,
+  DATES,
+  GRIDLINES,
+  LINE,
+  LIVE,
+  LOOP,
+  PEAK,
+  PEAK_DELTA,
+  PEAK_VALUE,
+  SOURCES,
+  TITLE,
+  TOTAL,
+  TOTAL_FROM,
+  at,
+} from "@/components/sections/service/visuals/liveDashboardShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -40,32 +51,28 @@ import { EASE } from "@/lib/motion";
  *
  * The loop is 12s and spends 6.7s of it perfectly still. That rest beat is the
  * difference between an illustration and a distraction.
+ *
+ * The phone stage gives the curve the room and keeps the same ten points; see
+ * `LiveDashboardPhone` for why.
  */
 
-const LOOP = 12;
-/** Blueprint timings in seconds, as fractions of the loop. */
-const at = (seconds: number) => beat(seconds, LOOP);
-
-/** Chart plot area, in its own 480x180 space. Peak at x=310 carries the tooltip. */
-const PLOT = [
-  [0, 152],
-  [53, 140],
-  [107, 146],
-  [160, 118],
-  [213, 96],
-  [267, 54],
-  [310, 20],
-  [373, 48],
-  [427, 38],
-  [480, 26],
-] as const;
-
-const LINE = PLOT.map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x} ${y}`).join(
-  " ",
-);
-const PEAK = { x: 310, y: 20 };
-
 export function LiveDashboard() {
+  return (
+    <>
+      <div className="md:hidden">
+        <LiveDashboardPhone />
+      </div>
+      <div className="hidden md:block">
+        <LiveDashboardDesktop />
+      </div>
+    </>
+  );
+}
+
+/** Where each source sits on this canvas, which is this canvas's business. */
+const SOURCE_Y = [160, 340];
+
+function LiveDashboardDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
   // Hovering parks the data loop so the reader can study a frame. Cheaper and
   // far less disruptive than tilting a frame full of 10px UI text.
@@ -142,26 +149,26 @@ export function LiveDashboard() {
       </svg>
 
       {/* ---- Collection sources ---- */}
-      <SourcePanel
-        label="Web Client"
-        detail="GA4 Stream"
-        top={160}
-        playing={playing}
-        float={{ amplitude: 4, period: 10, phase: 0.2 }}
-      />
-      <SourcePanel
-        label="Server Container"
-        detail="sGTM Verified"
-        top={340}
-        playing={playing}
-        float={{ amplitude: 4, period: 14, phase: 0.357 }}
-      />
+      {SOURCES.map((source, i) => (
+        <SourcePanel
+          key={source.label}
+          label={source.label}
+          detail={source.detail}
+          top={SOURCE_Y[i]}
+          playing={playing}
+          float={
+            i === 0
+              ? { amplitude: 4, period: 10, phase: 0.2 }
+              : { amplitude: 4, period: 14, phase: 0.357 }
+          }
+        />
+      ))}
 
       <div
         className="absolute"
         style={{ left: px(200), top: py(280), width: px(130) }}
       >
-        <CalloutChip style={{ fontSize: ts(11) }}>Server-side</CalloutChip>
+        <CalloutChip style={{ fontSize: ts(11) }}>{CALLOUT}</CalloutChip>
       </div>
 
       {/* ---- Primary: the dashboard ---- */}
@@ -184,7 +191,7 @@ export function LiveDashboard() {
           style={{ padding: `${ts(20)} ${ts(24)} 0` }}
         >
           <span className="text-ink font-medium" style={{ fontSize: ts(14) }}>
-            Revenue Attribution
+            {TITLE}
           </span>
           <span
             className="text-muted flex items-center"
@@ -194,7 +201,7 @@ export function LiveDashboard() {
               className="bg-brand-500 rounded-full"
               style={{ width: ts(6), height: ts(6) }}
             />
-            Live
+            {LIVE}
           </span>
         </div>
 
@@ -225,7 +232,11 @@ export function LiveDashboard() {
                   duration: LOOP,
                   times: [0, at(3.5), at(4.3), at(11.0), at(11.5), 1],
                   repeat: Infinity,
-                  ease: EASE.out,
+                  // One easing per hop, not one for the sequence: a bare `ease`
+                  // beside `times` is handed to WAAPI as the easing of the
+                  // whole effect, which remaps the loop's clock and lands every
+                  // offset somewhere else.
+                  ease: ["linear", EASE.out, "linear", "easeInOut", "linear"],
                 }
               : undefined
           }
@@ -234,14 +245,14 @@ export function LiveDashboard() {
             className="font-display text-ink leading-none font-semibold tracking-tight tabular-nums"
             style={{ fontSize: ts(18) }}
           >
-            $20,000
+            {PEAK_VALUE}
           </p>
           <p
             className="text-brand-600 flex items-center leading-none font-medium tabular-nums"
             style={{ fontSize: ts(12), marginTop: ts(6), gap: ts(4) }}
           >
             <span aria-hidden>&uarr;</span>
-            20%
+            {PEAK_DELTA}
           </p>
         </motion.div>
       </FloatPanel>
@@ -266,10 +277,9 @@ export function LiveDashboard() {
           className="font-display text-brand-600 leading-none font-semibold tracking-tight tabular-nums"
           style={{ fontSize: ts(24) }}
         >
-          {/* TODO(content): illustrative figures. Believable, not measured. */}
           <CountUp
-            value={120000}
-            from={80000}
+            value={TOTAL}
+            from={TOTAL_FROM}
             prefix="$"
             delay={2}
             duration={2}
@@ -279,7 +289,7 @@ export function LiveDashboard() {
           className="text-ink-soft"
           style={{ fontSize: ts(12), marginTop: ts(8) }}
         >
-          Attributed
+          {ATTRIBUTED}
         </span>
       </FloatPanel>
     </div>
@@ -336,11 +346,11 @@ function SourcePanel({
  * width and dash patterns are not distorted by the panel's own aspect.
  */
 function Chart({ running }: { running: boolean }) {
-  const draw = {
+  const draw: Transition = {
     duration: LOOP,
     times: [0, at(1.5), at(3.5), at(11.5), 1],
     repeat: Infinity,
-    ease: EASE.out,
+    ease: ["linear", EASE.out, "linear", "linear"],
   };
 
   return (
@@ -356,10 +366,7 @@ function Chart({ running }: { running: boolean }) {
     >
       {/* Value gridlines. Ambient — they give the curve something to be read
           against without competing with it. */}
-      {[
-        { y: 40, label: "$20k" },
-        { y: 100, label: "$10k" },
-      ].map((g) => (
+      {GRIDLINES.map((g) => (
         <g key={g.label}>
           <line
             x1={0}
@@ -389,7 +396,7 @@ function Chart({ running }: { running: boolean }) {
         stroke="var(--color-hair)"
         strokeWidth={1}
       />
-      {["Oct 12", "Oct 13", "Oct 14"].map((label, i) => (
+      {DATES.map((label, i) => (
         <text
           key={label}
           x={i * 214}
@@ -429,7 +436,7 @@ function Chart({ running }: { running: boolean }) {
                 duration: LOOP,
                 times: [0, at(3.5), at(4.3), at(11.0), at(11.5), 1],
                 repeat: Infinity,
-                ease: EASE.out,
+                ease: ["linear", EASE.out, "linear", "easeInOut", "linear"],
               }
             : undefined
         }

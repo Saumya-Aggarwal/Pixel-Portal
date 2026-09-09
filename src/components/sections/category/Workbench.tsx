@@ -12,6 +12,15 @@ import {
 import { useState } from "react";
 
 import { useScrubPlayhead } from "@/components/sections/category/useScrubPlayhead";
+import { WorkbenchPhone } from "@/components/sections/category/WorkbenchPhone";
+import {
+  BRANCHES,
+  CHAPTERS,
+  MAIN_COMMITS,
+  RELEASE,
+  TESTS,
+  hrefFor,
+} from "@/components/sections/category/workbenchShared";
 import { createCanvas } from "@/components/sections/service/visuals/canvas";
 
 /**
@@ -60,104 +69,6 @@ const LANE_STEP = 28;
 const gx = (f: number) => GX0 + f * GW;
 const laneY = (i: number) => LANE_0 + i * LANE_STEP;
 
-/**
- * A plausible history: branches overlap rather than running one at a time,
- * because that is the thing worth showing — four streams in flight at once.
- */
-const BRANCHES = [
-  {
-    slug: "custom-web-applications",
-    name: "feat/orders-api",
-    service: "Custom Web Applications",
-    fork: 0.06,
-    merge: 0.34,
-    commits: [0.12, 0.2, 0.28],
-    file: "src/app/orders/route.ts",
-    code: [
-      ["export", " async ", "function", " POST(req: ", "Request", ") {"],
-      ["  const", " body = ", "await", " req.json();"],
-      ["  const", " parsed = OrderSchema.", "parse", "(body);"],
-      [""],
-      ["  const", " order = ", "await", " createOrder(parsed);"],
-      ["  return", " Response.json(order, { status: ", "201", " });"],
-      ["}"],
-    ],
-  },
-  {
-    slug: "api-integrations",
-    name: "feat/crm-sync",
-    service: "API Integrations",
-    fork: 0.22,
-    merge: 0.56,
-    commits: [0.3, 0.4, 0.5],
-    file: "src/lib/sync.ts",
-    code: [
-      ["export", " async ", "function", " sync(order: ", "Order", ") {"],
-      ["  const", " [crm, erp] = ", "await", " Promise.all(["],
-      ["    salesforce.upsert(order),"],
-      ["    netsuite.push(order),"],
-      ["  ]);"],
-      [""],
-      ["  return", " { crm, erp, at: Date.now() };"],
-    ],
-  },
-  {
-    slug: "data-migration-scripting",
-    name: "chore/legacy-migrate",
-    service: "Data Migration & Scripting",
-    fork: 0.4,
-    merge: 0.7,
-    commits: [0.48, 0.58, 0.66],
-    file: "scripts/migrate.ts",
-    code: [
-      [
-        "for",
-        " await (",
-        "const",
-        " batch ",
-        "of",
-        " read(legacy, ",
-        "500",
-        ")) {",
-      ],
-      ["  const", " rows = batch.map(toTargetSchema);"],
-      [""],
-      ["  await", " target.insert(rows);"],
-      ["  checksum.update(rows);"],
-      ["  reporter.tick(rows.length);"],
-      ["}"],
-    ],
-  },
-  {
-    slug: "marketing-seo-tracking-systems",
-    name: "feat/event-pipeline",
-    service: "Marketing & SEO Tracking Systems",
-    fork: 0.62,
-    merge: 0.9,
-    commits: [0.7, 0.78, 0.86],
-    file: "src/lib/events.ts",
-    code: [
-      ["export", " function", " emit(event: ", "TrackedEvent", ") {"],
-      ["  queue.push({ ...event, ts: Date.now() });"],
-      [""],
-      ["  if", " (queue.length >= ", "50", ") {"],
-      ["    void", " flush(queue.splice(", "0", "));"],
-      ["  }"],
-      ["}"],
-    ],
-  },
-];
-
-/** Commits that land directly on main: the initial one, then every merge. */
-const MAIN_COMMITS = [0.02, ...BRANCHES.map((b) => b.merge)];
-const RELEASE = 0.96;
-
-/** Which branch is open in the editor. Bounded by the fork points. */
-const CHAPTERS = BRANCHES.map((branch, i) => ({
-  from: i === 0 ? 0 : BRANCHES[i].fork,
-  to: i === BRANCHES.length - 1 ? 1 : BRANCHES[i + 1].fork,
-}));
-
 const TREE = [
   { label: "src", depth: 0, dir: true },
   { label: "app/orders", depth: 1, dir: true },
@@ -169,13 +80,23 @@ const TREE = [
   { label: "migrate.ts", depth: 1, file: 2 },
 ];
 
-/** TODO(content): illustrative figures. */
-const TESTS = [32, 39, 44, 48];
-
 const MAGNET_RADIUS = 160;
 const MAGNET_PULL = 6;
 
 export function Workbench() {
+  return (
+    <>
+      <div className="md:hidden">
+        <WorkbenchPhone />
+      </div>
+      <div className="hidden md:block">
+        <WorkbenchDesktop />
+      </div>
+    </>
+  );
+}
+
+function WorkbenchDesktop() {
   const {
     ref,
     t,
@@ -679,7 +600,7 @@ function BranchLabel({
       onPointerLeave={onLeave}
     >
       <Link
-        href={`/software-development/${branch.slug}`}
+        href={hrefFor(branch.slug)}
         aria-label={`${branch.service} — branch ${branch.name}`}
         className={
           active
@@ -727,7 +648,7 @@ function CodeLine({
   last,
   playing,
 }: {
-  tokens: string[];
+  tokens: readonly string[];
   number: number;
   t: MotionValue<number>;
   chapter: { from: number; to: number };

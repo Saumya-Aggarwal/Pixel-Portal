@@ -8,12 +8,22 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { MarketplaceBridgePhone } from "@/components/sections/service/visuals/MarketplaceBridgePhone";
+import {
+  BUYER_TILES,
+  BUYER_TITLE,
+  CORE_TITLE,
+  LOOP,
+  RELATIONS,
+  VENDOR_ROWS,
+  VENDOR_TITLE,
+  at,
+} from "@/components/sections/service/visuals/marketplaceBridgeShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -29,10 +39,23 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * leaders to show through, so the entire connection would have rendered
  * invisible. The route now runs above the planes through the open band at the
  * top, where there is actually clear space.
+ *
+ * The phone stage keeps the overlap and drops the route; see
+ * `MarketplaceBridgePhone` for why.
  */
 
-const LOOP = 8.5;
-const at = (seconds: number) => beat(seconds, LOOP);
+export function MarketplaceBridge() {
+  return (
+    <>
+      <div className="md:hidden">
+        <MarketplaceBridgePhone />
+      </div>
+      <div className="hidden md:block">
+        <MarketplaceBridgeDesktop />
+      </div>
+    </>
+  );
+}
 
 /** Waypoints for the sync, in canvas coordinates. Above the planes throughout. */
 const ROUTE = {
@@ -42,7 +65,7 @@ const ROUTE = {
   buyer: { x: 760, y: 200 },
 };
 
-export function MarketplaceBridge() {
+function MarketplaceBridgeDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -52,18 +75,14 @@ export function MarketplaceBridge() {
 
       {/* Side planes. Headings sit in the corner the core does not reach. */}
       <SidePlane
-        title="Vendor Portal"
+        title={VENDOR_TITLE}
         align="left"
         left={60}
         playing={playing}
         float={{ amplitude: 3, period: 16, phase: 0 }}
       >
         <div style={{ display: "grid", gap: cq(8) }}>
-          {[
-            ["Listings", "1,204"],
-            ["Pending review", "18"],
-            ["Payout due", "$8,410"],
-          ].map(([label, value]) => (
+          {VENDOR_ROWS.map(([label, value]) => (
             <div
               key={label}
               className="border-hair flex justify-between border-b"
@@ -84,7 +103,7 @@ export function MarketplaceBridge() {
       </SidePlane>
 
       <SidePlane
-        title="Buyer Experience"
+        title={BUYER_TITLE}
         align="right"
         left={580}
         playing={playing}
@@ -97,7 +116,7 @@ export function MarketplaceBridge() {
             gap: cq(9),
           }}
         >
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+          {Array.from({ length: BUYER_TILES }, (_, i) => (
             <div
               key={i}
               className="border-hair rounded-md border"
@@ -140,15 +159,10 @@ export function MarketplaceBridge() {
           className="text-brand-700 text-center font-medium"
           style={{ fontSize: ts(14) }}
         >
-          Core Data Model
+          {CORE_TITLE}
         </p>
         <div style={{ display: "grid", gap: cq(9), marginTop: ts(18) }}>
-          {[
-            ["vendor", "1 : n", "listing"],
-            ["listing", "1 : n", "variant"],
-            ["order", "n : 1", "buyer"],
-            ["payout", "n : 1", "vendor"],
-          ].map(([from, rel, to]) => (
+          {RELATIONS.map(({ from, rel, to }) => (
             <div
               key={`${from}-${to}`}
               className="border-hair bg-paper flex items-center justify-between rounded-md border"
@@ -242,11 +256,16 @@ export function MarketplaceBridge() {
                   duration: LOOP,
                   times: [0, at(1.0), at(1.7), at(2.7), 1],
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  // One easing per hop, not one for the sequence: a bare `ease`
+                  // beside `times` is handed to WAAPI as the easing of the whole
+                  // effect, which remaps the loop's clock and lands every offset
+                  // somewhere else.
+                  ease: ["easeInOut", "linear", "easeInOut", "linear"],
                   opacity: {
                     duration: LOOP,
                     times: [0, at(0.2), at(2.4), at(2.7), at(2.9), 1],
                     repeat: Infinity,
+                    ease: ["easeOut", "linear", "linear", "easeIn", "linear"],
                   },
                 }
               : undefined

@@ -9,12 +9,23 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { AdsFunnelPhone } from "@/components/sections/service/visuals/AdsFunnelPhone";
+import {
+  CHANNELS,
+  LOOP,
+  RINGS as RING_CONTENT,
+  ROAS,
+  ROAS_LABEL,
+  ROAS_SUFFIX,
+  SPEND,
+  SPEND_LABEL,
+  at,
+} from "@/components/sections/service/visuals/adsFunnelShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -45,12 +56,23 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * - **The walls are the funnel.** Three pills with air between them are three
  *   pills. The hairlines joining consecutive edges are what make the taper
  *   legible, and they are solid where flow is dashed.
+ *
+ * The phone stage keeps the taper and gives up the four-drop rail; see
+ * `AdsFunnelPhone` for why.
  */
 
-const LOOP = 7;
-const at = (seconds: number) => beat(seconds, LOOP);
-
-const CHANNELS = ["Google", "Meta", "LinkedIn", "YouTube"];
+export function AdsFunnel() {
+  return (
+    <>
+      <div className="md:hidden">
+        <AdsFunnelPhone />
+      </div>
+      <div className="hidden md:block">
+        <AdsFunnelDesktop />
+      </div>
+    </>
+  );
+}
 
 /** Chip centres, spread across the top ring's own span. */
 const CHANNEL_X = (i: number) => 300 + i * 120;
@@ -68,11 +90,13 @@ const TRUNK_Y = 92;
  * label rather than beside it — `justify-between` ran "Conversion" and "412"
  * straight into each other.
  */
-const RINGS = [
-  { label: "Cross-Channel Traffic", figure: "40,000", x: 280, w: 400, y: 140 },
-  { label: "Intent & Engagement", figure: "5,000", x: 335, w: 290, y: 290 },
-  { label: "Conversion", figure: "400", x: 395, w: 170, y: 440 },
+const RING_GEOM = [
+  { x: 280, w: 400, y: 140 },
+  { x: 335, w: 290, y: 290 },
+  { x: 395, w: 170, y: 440 },
 ];
+
+const RINGS = RING_CONTENT.map((ring, i) => ({ ...ring, ...RING_GEOM[i] }));
 
 const RING_H = 110;
 
@@ -93,7 +117,7 @@ const FLOW = [
   { x1: ringRight(2), y1: ringMid(2), x2: 700, y2: ringMid(2), t: 3.3 },
 ];
 
-export function AdsFunnel() {
+function AdsFunnelDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -276,7 +300,7 @@ export function AdsFunnel() {
       })}
 
       <SidePanel
-        label="Weekly Spend"
+        label={SPEND_LABEL}
         left={40}
         mid={ringMid(0)}
         width={200}
@@ -287,12 +311,12 @@ export function AdsFunnel() {
           className="font-display text-ink leading-none font-semibold tracking-tight tabular-nums"
           style={{ fontSize: ts(24) }}
         >
-          $10,000
+          {SPEND}
         </span>
       </SidePanel>
 
       <SidePanel
-        label="Blended ROAS"
+        label={ROAS_LABEL}
         left={700}
         mid={ringMid(2)}
         width={200}
@@ -304,8 +328,8 @@ export function AdsFunnel() {
           style={{ fontSize: ts(24) }}
         >
           <CountUp
-            value={4}
-            suffix="x"
+            value={ROAS}
+            suffix={ROAS_SUFFIX}
             delay={1.5}
             duration={1.5}
           />

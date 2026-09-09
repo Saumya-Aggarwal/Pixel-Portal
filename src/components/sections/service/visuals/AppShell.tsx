@@ -6,10 +6,24 @@ import { Backlight } from "@/components/sections/service/visuals/chrome/Backligh
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
 import { cq, px, py, ts } from "@/components/sections/service/visuals/canvas";
+import { AppShellPhone } from "@/components/sections/service/visuals/AppShellPhone";
 import {
-  useSequence,
-  type SequenceStep,
-} from "@/components/sections/service/visuals/useSequence";
+  CLOSE,
+  COLUMNS,
+  DROP,
+  LOGS_INDEX,
+  LOG_ENTRIES,
+  NAV,
+  PARKED,
+  REACT,
+  ROWS,
+  SESSION,
+  SWAP,
+  isAdmin,
+  makeShift,
+  type StopName,
+} from "@/components/sections/service/visuals/appShellShared";
+import { useSequence } from "@/components/sections/service/visuals/useSequence";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -68,153 +82,36 @@ const NAV_H = 26;
 const NAV_PITCH = 29;
 const navTop = (i: number) => NAV_TOP + i * NAV_PITCH;
 
-const NAV = [
-  "Dashboard",
-  "Users",
-  "Roles",
-  "Settings",
-  "Reports",
-  "Access Logs",
-  "Integrations",
-];
-const LOGS_INDEX = 5;
-
 /** Centre of the role selector, which is the pointer's last stop. */
 const ROLE_W = 112;
 const ROLE_CX = RAIL_W + (SHELL.w - RAIL_W) - 20 - ROLE_W / 2;
 
 /** Pointer stops, as tip positions inside the shell. */
-const STOP = {
+const STOP: Record<StopName, { x: number; y: number }> = {
   idle: { x: 430, y: 300 },
   logs: { x: 62, y: navTop(LOGS_INDEX) + NAV_H / 2 - 4 },
   profile: { x: 62, y: 442 },
   role: { x: ROLE_CX, y: 30 },
 };
 
-type StopName = keyof typeof STOP;
-
-/**
- * The operator's session, as the steps it is actually made of.
- *
- * `travel` is the move into the step; `dwell` is the pause once the pointer is
- * there. Reactions all fire on arrival, so a step's own duration is the only
- * number that has to be right — there is no second list of offsets to keep in
- * agreement with this one, which is exactly how the previous version drifted.
- *
- * Adding a stop is adding a row here. The whole loop is the sum of the column,
- * currently a little over 13 seconds.
- */
-interface Beat extends SequenceStep {
-  /** Where the pointer travels for this step. */
-  stop: StopName;
-  /** Whether the arrow is on screen during it. */
-  shown?: boolean;
-  /** It clicks the instant it arrives. */
-  click?: boolean;
-  /** The overlay this stop opens, held for the dwell. */
-  panel?: "logs" | "profile";
-  /** The click on this step is the one that changes the role. */
-  commit?: boolean;
-  /** Steps after the commit, which inherit the changed view. */
-  editor?: boolean;
-}
-
-const SESSION: readonly Beat[] = [
-  // The shell sits as found. Nothing has happened yet, and nothing should:
-  // a loop that opens mid-gesture reads as a clip starting late.
-  { stop: "idle", travel: 0, dwell: 0.9 },
-  // The arrow arrives at rest before it moves anywhere.
-  { stop: "idle", travel: 0.4, dwell: 0.4, shown: true },
-  { stop: "logs", travel: 0.85, dwell: 1.5, shown: true, click: true, panel: "logs" },
-  {
-    stop: "profile",
-    travel: 0.75,
-    dwell: 1.5,
-    shown: true,
-    click: true,
-    panel: "profile",
-  },
-  { stop: "role", travel: 0.9, dwell: 2.4, shown: true, click: true, commit: true },
-  // It leaves. The view it changed stays changed while it goes — the operator
-  // moving on is not an undo.
-  { stop: "idle", travel: 0.8, dwell: 0.4, shown: true, editor: true },
-  { stop: "idle", travel: 0.35, dwell: 0.9, editor: true },
-  // Off screen, the table repopulates and the loop is ready to run again.
-  { stop: "idle", travel: 0, dwell: 1.0 },
-];
-
-/** What the shell looks like with no one operating it: the session's outcome. */
-const PARKED: Beat = { stop: "idle", travel: 0, dwell: 0, editor: true };
-
-/**
- * Reaction delays, in seconds, measured from the moment the pointer arrives.
- *
- * These are small on purpose. They are not synchronisation — the state change
- * already guarantees the order — they are the beat that makes a consequence
- * read as a consequence rather than as a coincidence.
- */
-const REACT = {
-  /** Hover tint. Fast, because a hover is not an event. */
-  hover: 0.12,
-  /** The click ripple. */
-  click: 0.05,
-  /** An overlay answering the click. */
-  open: 0.14,
-  /** A pressed control's depress and release. */
-  press: 0.4,
-  /** The confirmation chip, which waits for the button to come back up. */
-  confirm: 0.3,
-};
-
-const COLUMNS = ["ID", "Name", "Role", "Last Active", "Status"];
 const GRID = "16% 24% 20% 22% 18%";
 
-const ROWS = [
-  ["USR-01", "A. Smith", "Admin", "Today", "Active"],
-  ["USR-02", "J. Doe", "Editor", "Yesterday", "Active"],
-  ["USR-03", "S. Lee", "Editor", "Oct 12", "Active"],
-  ["USR-04", "M. Ray", "Viewer", "Oct 10", "Locked"],
-  ["USR-05", "K. Patel", "Viewer", "Oct 9", "Active"],
-  ["USR-06", "D. Osei", "Admin", "Oct 8", "Active"],
-  ["USR-07", "L. Chen", "Editor", "Oct 5", "Active"],
-];
-
-const LOG_ENTRIES = [
-  ["A. Smith", "signed in", "2m ago"],
-  ["J. Doe", "exported CSV", "1h ago"],
-  ["M. Ray", "failed login", "3h ago"],
-];
-
-/** The rows an Editor cannot see. Everything below each one closes the gap. */
-const ADMIN_ROWS = [0, 5];
-const isAdmin = (i: number) => ADMIN_ROWS.includes(i);
-const shiftFor = (i: number) =>
-  `-${(ADMIN_ROWS.filter((a) => a < i).length * ROW_PITCH * 100) / ROW_H}%`;
-
-/**
- * The consequence of the role change, as a cascade behind the confirmation:
- * the two rows an Editor cannot see fade first, then the rest close the gap.
- * On the way back both return together — a reset is not a performance.
- */
-const DROP = (editor: boolean) => ({
-  duration: 0.4,
-  delay: editor ? 0.45 : 0,
-  ease: "easeInOut" as const,
-});
-const CLOSE = (editor: boolean) => ({
-  duration: 0.5,
-  delay: editor ? 0.75 : 0,
-  ease: "easeInOut" as const,
-});
-
-/** Label crossfades, timed to land as the selector releases. */
-const SWAP = (editor: boolean) => ({
-  duration: 0.25,
-  delay: editor ? REACT.press * 0.75 : 0,
-  ease: "easeOut" as const,
-});
+const shiftFor = makeShift(ROW_PITCH, ROW_H);
 
 export function AppShell() {
+  return (
+    <>
+      <div className="md:hidden">
+        <AppShellPhone />
+      </div>
+      <div className="hidden md:block">
+        <AppShellDesktop />
+      </div>
+    </>
+  );
+}
+
+function AppShellDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
   const phase = useSequence(SESSION, playing);
 
@@ -372,7 +269,9 @@ export function AppShell() {
               initial={false}
               animate={{ scale: pressing ? [1, 0.96, 1] : 1 }}
               transition={
-                pressing ? { duration: REACT.press, times: [0, 0.35, 1] } : { duration: 0 }
+                pressing
+                  ? { duration: REACT.press, times: [0, 0.35, 1] }
+                  : { duration: 0 }
               }
             >
               <motion.span
@@ -653,7 +552,12 @@ export function AppShell() {
           </div>
         </Overlay>
 
-        <Pointer stop={stop} shown={shown} travel={step.travel} clicking={clicking} />
+        <Pointer
+          stop={stop}
+          shown={shown}
+          travel={step.travel}
+          clicking={clicking}
+        />
       </FloatPanel>
     </div>
   );
@@ -754,7 +658,12 @@ function Pointer({
         }
         transition={
           clicking
-            ? { duration: 0.5, delay: REACT.click, times: [0, 0.12, 1], ease: "easeOut" }
+            ? {
+                duration: 0.5,
+                delay: REACT.click,
+                times: [0, 0.12, 1],
+                ease: "easeOut",
+              }
             : { duration: 0 }
         }
       />

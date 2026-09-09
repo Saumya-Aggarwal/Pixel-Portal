@@ -8,12 +8,23 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { EmailFlowPhone } from "@/components/sections/service/visuals/EmailFlowPhone";
+import {
+  BRANCHES,
+  CTA,
+  EnvelopeGlyph,
+  FROM,
+  LOOP,
+  PREHEADER,
+  STATS,
+  SUBJECT,
+  at,
+} from "@/components/sections/service/visuals/emailFlowShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -29,31 +40,28 @@ import { EASE } from "@/lib/motion";
  * the follow-up that goes out when someone opens, and the resend that goes out
  * when nobody does. That is what an automation actually is: not a decision
  * tree, a sequence of messages.
+ *
+ * The phone stage gives the mailer the whole column and keeps the fork; see
+ * `EmailFlowPhone` for why.
  */
 
-const LOOP = 9;
-const at = (seconds: number) => beat(seconds, LOOP);
-
-const BRANCHES = [
-  {
-    id: "opened",
-    chip: "Opened",
-    subject: "Your order is confirmed",
-    preheader: "Plus something you might like",
-    y: 90,
-    live: true,
-  },
-  {
-    id: "quiet",
-    chip: "No open · 24h",
-    subject: "Still thinking it over?",
-    preheader: "Resent with a new subject line",
-    y: 290,
-    live: false,
-  },
-];
-
 export function EmailFlow() {
+  return (
+    <>
+      <div className="md:hidden">
+        <EmailFlowPhone />
+      </div>
+      <div className="hidden md:block">
+        <EmailFlowDesktop />
+      </div>
+    </>
+  );
+}
+
+/** Where each follow-up sits on this canvas, which is this canvas's business. */
+const BRANCH_Y = [90, 290];
+
+function EmailFlowDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -66,10 +74,10 @@ export function EmailFlow() {
         aria-hidden
         className="pointer-events-none absolute inset-0 size-full"
       >
-        {BRANCHES.map((branch) => (
+        {BRANCHES.map((branch, i) => (
           <path
             key={branch.id}
-            d={`M 380 320 L 440 320 L 440 ${branch.y + 75} L 500 ${branch.y + 75}`}
+            d={`M 380 320 L 440 320 L 440 ${BRANCH_Y[i] + 75} L 500 ${BRANCH_Y[i] + 75}`}
             fill="none"
             stroke="var(--color-brand-200)"
             strokeWidth={1.5}
@@ -97,11 +105,16 @@ export function EmailFlow() {
                   duration: LOOP,
                   times: [0, at(0.6), at(1.3), at(1.8), 1],
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  // One easing per hop, not one for the sequence: a bare `ease`
+                  // beside `times` is handed to WAAPI as the easing of the whole
+                  // effect, which remaps the loop's clock and lands every offset
+                  // somewhere else.
+                  ease: ["easeInOut", "linear", "easeInOut", "linear"],
                   opacity: {
                     duration: LOOP,
                     times: [0, at(0.15), at(1.5), at(1.8), at(2.0), 1],
                     repeat: Infinity,
+                    ease: ["easeOut", "linear", "linear", "easeIn", "linear"],
                   },
                 }
               : undefined
@@ -127,19 +140,19 @@ export function EmailFlow() {
       >
         <div className="border-hair border-b" style={{ padding: ts(18) }}>
           <p className="text-muted" style={{ fontSize: ts(10) }}>
-            From · Pixel Portal
+            {FROM}
           </p>
           <p
             className="text-ink font-medium"
             style={{ fontSize: ts(14), marginTop: ts(7) }}
           >
-            You left something behind
+            {SUBJECT}
           </p>
           <p
             className="text-muted truncate"
             style={{ fontSize: ts(11), marginTop: ts(5) }}
           >
-            Your cart is saved for 48 hours
+            {PREHEADER}
           </p>
         </div>
 
@@ -182,7 +195,7 @@ export function EmailFlow() {
               className="font-medium text-white"
               style={{ fontSize: ts(11) }}
             >
-              Complete your order
+              {CTA}
             </span>
           </div>
         </div>
@@ -199,7 +212,7 @@ export function EmailFlow() {
             }
             style={{
               left: px(408),
-              top: py(branch.y + 46),
+              top: py(BRANCH_Y[i] + 46),
               padding: `${ts(6)} ${ts(11)}`,
               fontSize: ts(10),
               zIndex: 40,
@@ -216,7 +229,7 @@ export function EmailFlow() {
                     duration: LOOP,
                     times: [0, at(1.3), at(1.9), at(8.2), 1],
                     repeat: Infinity,
-                    ease: EASE.out,
+                    ease: ["linear", EASE.out, "linear", EASE.inOut],
                   }
                 : undefined
             }
@@ -230,7 +243,7 @@ export function EmailFlow() {
             className="absolute overflow-hidden"
             style={{
               left: px(500),
-              top: py(branch.y),
+              top: py(BRANCH_Y[i]),
               width: px(400),
               height: py(150),
               padding: ts(18),
@@ -298,11 +311,7 @@ export function EmailFlow() {
         }}
       >
         {/* TODO(content): illustrative figures. */}
-        {[
-          ["Delivered", "10,000"],
-          ["Opened", "40%"],
-          ["Clicked", "10%"],
-        ].map(([label, value], i) => (
+        {STATS.map(([label, value], i) => (
           <span key={label} style={{ display: "grid", gap: ts(8) }}>
             <span className="text-muted" style={{ fontSize: ts(11) }}>
               {label}
@@ -321,23 +330,5 @@ export function EmailFlow() {
         ))}
       </FloatPanel>
     </div>
-  );
-}
-
-function EnvelopeGlyph({ live }: { live: boolean }) {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={live ? "var(--color-brand-700)" : "var(--color-muted)"}
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="m3 7 9 6 9-6" />
-    </svg>
   );
 }

@@ -6,15 +6,7 @@ import { CountUp } from "@/components/motion/CountUp";
 import { Backlight } from "@/components/sections/service/visuals/chrome/Backlight";
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
-import {
-  H,
-  W,
-  cq,
-  px,
-  py,
-  ts,
-} from "@/components/sections/service/visuals/canvas";
-import { TableTransferPhone } from "@/components/sections/service/visuals/TableTransferPhone";
+import { createCanvas } from "@/components/sections/service/visuals/canvas";
 import {
   Cells,
   Cylinder,
@@ -37,88 +29,93 @@ import {
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
- * A move you can prove.
+ * Phone stage of the data-migration-scripting depiction.
  *
- * The legacy table drains, everything passes through a staging store that
- * checksums it, the target fills, and the reconciliation panel counts what has
- * been verified. Nothing crosses directly: that is the argument, since a
- * migration you can prove is one where every row was written down somewhere in
- * between.
+ * The 960x640 drawing runs left to right — legacy table, staging store, target
+ * table — with a reconciliation panel and a scripting panel filling the bottom
+ * corners. Two 320-wide tables side by side need 640 units of width before the
+ * store between them; a 327px column has room for one.
  *
- * The store sits between the two tables without touching either, and the tables
- * sit at different vertical offsets. That keeps it clear of the marketplace
- * two-sided model, whose core is a large plane deliberately *overlapping* both
- * sides with its route arcing over the top — here the middle is a small waypoint
- * on a descending line, not a shared surface.
+ * So the run turns vertical, and the descent becomes the migration: source at
+ * the top, staging in the middle, target below it. That also gives the hops a
+ * shape they never had on the desktop — three lines converge into the store and
+ * three diverge out of it, which is what a staging step actually does to a
+ * table and reads at a glance as a funnel rather than as six parallel wires.
  *
- * **The blueprint's connectors drifted off the rows they claim to join.** They
- * were specified at y=160/260/360 on the left and 220/320/420 on the right,
- * while the rows they connect have midlines at 158/248/338 and 218/308/398 —
- * off by 2, then 12, then 22, growing with each bridge. Every endpoint is
- * derived from the row geometry here.
+ * **What is kept, because it is the argument.** Nothing crosses directly. Every
+ * row goes by way of a store that checksums it, the legacy rows drain rather
+ * than vanish, the target rows rise into place, and the scripting panel stays —
+ * the service is Data Migration *and* Scripting, and the desktop added that
+ * panel precisely because the blueprint depicted no scripting at all.
  *
- * **The scripting panel is added.** The service is Data Migration *and
- * Scripting*, and the blueprint depicted no scripting at all while leaving the
- * bottom-left quadrant empty. One panel closes both gaps.
+ * **What changed.** Three rows a table rather than six, so the footer reads "3
+ * of 142,500 shown" — the count was always the thing carrying the scale, not
+ * the row count. The reconciliation panel is gone as a panel and its figure is
+ * the target's footer instead, which is where a migrated-record count belongs;
+ * "Constraints enforced" goes with it, since the `verified · TRUE` column
+ * already says so. Each table's eyebrow sits inline with its title rather than
+ * above it, which buys back the height the extra table costs.
  */
 
-const LEGACY = { x: 40, y: 60, w: 320, h: 400 };
-const STORE = { x: 405, y: 210, w: 150, h: 170 };
-const TARGET = { x: 600, y: 120, w: 320, h: 400 };
+const { W, H, px, py, ts, cq } = createCanvas(360, 640);
 
-const STORE_MID_Y = STORE.y + STORE.h / 2;
+const PANEL_X = 20;
+const PANEL_W = 320;
+const TABLE_H = 188;
 
-const ROW_X = 28;
-const ROW_W = 264;
-const ROW_H = 36;
-const ROW_PITCH = 45;
-const ROW_TOP = 80;
+const LEGACY = { y: 20, h: TABLE_H };
+const STORE = { x: 90, y: 232, w: 180, h: 64 };
+const TARGET = { y: 320, h: TABLE_H };
+const SCRIPT = { y: 532, h: 88 };
 
-/** Canvas midline of row `i`, derived rather than restated. */
-const legacyMid = (i: number) => LEGACY.y + ROW_TOP + i * ROW_PITCH + ROW_H / 2;
-const targetMid = (i: number) => TARGET.y + ROW_TOP + i * ROW_PITCH + ROW_H / 2;
+/** Table interior, panel-relative. */
+const ROW_X = 16;
+const ROW_W = PANEL_W - ROW_X * 2;
+const HEAD_Y = 48;
+const ROW_TOP = 70;
+const ROW_H = 26;
+const ROW_PITCH = 30;
+const FOOTER_Y = 162;
 
 /** Three rows in, three rows out — everything by way of the store. */
-const INTAKE = [0, 2, 4].map((i, n) => ({
-  id: `in-${i}`,
-  x1: LEGACY.x + LEGACY.w,
-  y1: legacyMid(i),
-  x2: STORE.x,
-  y2: STORE_MID_Y,
+const LANES = [100, 180, 260];
+const STORE_CX = STORE.x + STORE.w / 2;
+
+const INTAKE = LANES.map((x, n) => ({
+  id: `in-${n}`,
+  x1: x,
+  y1: LEGACY.y + LEGACY.h,
+  x2: STORE_CX,
+  y2: STORE.y,
   t: 0.3 + n * 0.6,
 }));
 
-const OUTFLOW = [0, 2, 4].map((i, n) => ({
-  id: `out-${i}`,
-  x1: STORE.x + STORE.w,
-  y1: STORE_MID_Y,
-  x2: TARGET.x,
-  y2: targetMid(i),
+const OUTFLOW = LANES.map((x, n) => ({
+  id: `out-${n}`,
+  x1: STORE_CX,
+  y1: STORE.y + STORE.h,
+  x2: x,
+  y2: TARGET.y,
   t: 1.2 + n * 0.6,
 }));
 
 const HOPS = [...INTAKE, ...OUTFLOW];
 
-export function TableTransfer() {
-  return (
-    <>
-      <div className="md:hidden">
-        <TableTransferPhone />
-      </div>
-      <div className="hidden md:block">
-        <TableTransferDesktop />
-      </div>
-    </>
-  );
-}
+const ROWS_SHOWN = 3;
+const LEGACY_SHOWN = LEGACY_ROWS.slice(0, ROWS_SHOWN);
+const TARGET_SHOWN = TARGET_ROWS.slice(0, ROWS_SHOWN);
 
-function TableTransferDesktop() {
+export function TableTransferPhone() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
-    <div ref={ref} className="@container relative aspect-3/2 w-full">
+    <div
+      ref={ref}
+      className="@container relative w-full"
+      style={{ aspectRatio: `${W} / ${H}` }}
+    >
       <GridGround />
-      <Backlight size="lg" className="top-[25%] left-[33.333%]" />
+      <Backlight size="md" className="top-[30%] left-[18%]" />
 
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -137,7 +134,7 @@ function TableTransferDesktop() {
         {HOPS.map((h) => (
           <motion.circle
             key={h.id}
-            r={4}
+            r={3.5}
             fill="var(--color-brand-500)"
             initial={false}
             animate={
@@ -166,14 +163,19 @@ function TableTransferDesktop() {
       {/* ---- Legacy ---- */}
       <TablePanel
         playing={playing}
-        box={LEGACY}
+        y={LEGACY.y}
+        h={LEGACY.h}
         eyebrow="Source"
         title={LEGACY_TITLE}
         columns={LEGACY_COLUMNS}
-        footer={shownLabel(6)}
-        float={{ amplitude: 6, period: 12, phase: 0 }}
+        footer={
+          <span className="text-muted" style={{ fontSize: ts(10) }}>
+            {shownLabel(ROWS_SHOWN)}
+          </span>
+        }
+        float={{ amplitude: 5, period: 12, phase: 0 }}
       >
-        {LEGACY_ROWS.map((row, i) => {
+        {LEGACY_SHOWN.map((row, i) => {
           const delay = 0.3 + i * 0.4;
           return (
             <motion.div
@@ -185,7 +187,7 @@ function TableTransferDesktop() {
                 width: cq(ROW_W),
                 height: cq(ROW_H),
                 gridTemplateColumns: GRID,
-                padding: `0 ${cq(12)}`,
+                padding: `0 ${cq(10)}`,
               }}
               initial={false}
               animate={
@@ -202,7 +204,7 @@ function TableTransferDesktop() {
                   : undefined
               }
             >
-              <Cells row={row} fontSize={ts(10)} />
+              <Cells row={row} fontSize={ts(11)} />
             </motion.div>
           );
         })}
@@ -211,46 +213,62 @@ function TableTransferDesktop() {
       {/* ---- The staging store ---- */}
       <FloatPanel
         playing={playing}
-        float={{ amplitude: 5, period: 13, phase: 0.3 }}
-        className="absolute flex flex-col items-center justify-center"
+        float={{ amplitude: 4, period: 13, phase: 0.3 }}
+        className="absolute flex items-center"
         style={{
           left: px(STORE.x),
           top: py(STORE.y),
           width: px(STORE.w),
           height: py(STORE.h),
-          padding: cq(14),
+          padding: `0 ${cq(16)}`,
+          gap: cq(12),
           backgroundColor: "#fff",
-          borderRadius: "clamp(0.625rem, 2.083cqw, 1.25rem)",
+          borderRadius: "clamp(0.625rem, 3.333cqw, 1rem)",
           zIndex: 30,
         }}
       >
-        <Cylinder width={cq(40)} height={cq(48)} />
-        <span
-          className="text-ink font-medium"
-          style={{ fontSize: ts(11), marginTop: cq(12) }}
-        >
-          Staging
-        </span>
-        <span
-          className="text-muted tabular-nums"
-          style={{ fontSize: ts(9), marginTop: cq(5) }}
-        >
-          checksummed
+        <Cylinder width={cq(28)} height={cq(34)} />
+        <span className="min-w-0">
+          <span
+            className="text-ink block font-medium"
+            style={{ fontSize: ts(12) }}
+          >
+            Staging
+          </span>
+          <span
+            className="text-muted block"
+            style={{ fontSize: ts(10), marginTop: cq(3) }}
+          >
+            checksummed
+          </span>
         </span>
       </FloatPanel>
 
       {/* ---- Target ---- */}
       <TablePanel
         playing={playing}
-        box={TARGET}
+        y={TARGET.y}
+        h={TARGET.h}
         eyebrow="Target"
         title={TARGET_TITLE}
         columns={TARGET_COLUMNS}
-        footer="Constraints enforced"
         accent
-        float={{ amplitude: 6, period: 12, phase: 0.5 }}
+        footer={
+          <>
+            <span className="text-ink-soft" style={{ fontSize: ts(11) }}>
+              Records migrated
+            </span>
+            <span
+              className="font-display text-brand-600 leading-none font-semibold tracking-tight tabular-nums"
+              style={{ fontSize: ts(18) }}
+            >
+              <CountUp value={MIGRATED} delay={1} duration={3} />
+            </span>
+          </>
+        }
+        float={{ amplitude: 5, period: 12, phase: 0.5 }}
       >
-        {TARGET_ROWS.map((row, i) => {
+        {TARGET_SHOWN.map((row, i) => {
           const delay = 1.1 + i * 0.4;
           return (
             <motion.div
@@ -262,7 +280,7 @@ function TableTransferDesktop() {
                 width: cq(ROW_W),
                 height: cq(ROW_H),
                 gridTemplateColumns: GRID,
-                padding: `0 ${cq(12)}`,
+                padding: `0 ${cq(10)}`,
                 backgroundColor: "var(--color-paper)",
               }}
               initial={false}
@@ -285,52 +303,25 @@ function TableTransferDesktop() {
                   : undefined
               }
             >
-              <Cells row={row} fontSize={ts(10)} verified />
+              <Cells row={row} fontSize={ts(11)} verified />
             </motion.div>
           );
         })}
       </TablePanel>
 
-      {/* ---- Reconciliation ---- */}
-      <FloatPanel
-        playing={playing}
-        float={{ amplitude: 6, period: 12, phase: 0.5 }}
-        className="absolute flex items-center justify-between"
-        style={{
-          left: px(TARGET.x),
-          top: py(540),
-          width: px(TARGET.w),
-          height: py(60),
-          padding: `0 ${cq(22)}`,
-          borderRadius: "clamp(0.5rem, 1.667cqw, 1rem)",
-          zIndex: 30,
-        }}
-      >
-        <span className="text-ink-soft" style={{ fontSize: ts(11) }}>
-          Records migrated
-        </span>
-        {/* TODO(content): illustrative figures. */}
-        <span
-          className="font-display text-brand-600 leading-none font-semibold tracking-tight tabular-nums"
-          style={{ fontSize: ts(20) }}
-        >
-          <CountUp value={MIGRATED} delay={1} duration={3} />
-        </span>
-      </FloatPanel>
-
       {/* ---- The scripting half of the service ---- */}
       <FloatPanel
         playing={playing}
-        float={{ amplitude: 6, period: 14, phase: 0.25 }}
+        float={{ amplitude: 5, period: 14, phase: 0.25 }}
         className="absolute overflow-hidden"
         style={{
-          left: px(LEGACY.x),
-          top: py(500),
-          width: px(LEGACY.w),
-          height: py(100),
+          left: px(PANEL_X),
+          top: py(SCRIPT.y),
+          width: px(PANEL_W),
+          height: py(SCRIPT.h),
           backgroundColor: "var(--color-paper)",
-          borderRadius: "clamp(0.5rem, 1.667cqw, 1rem)",
-          padding: cq(16),
+          borderRadius: "clamp(0.5rem, 3.333cqw, 1rem)",
+          padding: cq(14),
           zIndex: 30,
         }}
       >
@@ -344,20 +335,20 @@ function TableTransferDesktop() {
           ))}
           <span
             className="text-muted"
-            style={{ fontSize: ts(9), marginLeft: cq(6) }}
+            style={{ fontSize: ts(10), marginLeft: cq(6) }}
           >
             {SCRIPT_FILE}
           </span>
         </div>
         <p
           className="text-ink-soft truncate font-mono"
-          style={{ fontSize: ts(10), marginTop: cq(12) }}
+          style={{ fontSize: ts(11), marginTop: cq(11) }}
         >
           {SCRIPT_COMMAND}
         </p>
         <p
           className="text-brand-700 truncate font-mono"
-          style={{ fontSize: ts(10), marginTop: cq(7) }}
+          style={{ fontSize: ts(11), marginTop: cq(7) }}
         >
           {SCRIPT_RESULT}
         </p>
@@ -366,9 +357,18 @@ function TableTransferDesktop() {
   );
 }
 
+/**
+ * A table, with its eyebrow inline against its title.
+ *
+ * The desktop stacks the two, which costs a line. Stacking twice on a canvas
+ * carrying two tables is a line and a half of the store's height, and "SOURCE"
+ * beside "Legacy DB (MySQL)" is 153 of the 288 units available — it reads as a
+ * label on a title rather than as a heading needing its own row.
+ */
 function TablePanel({
   playing,
-  box,
+  y,
+  h,
   eyebrow,
   title,
   columns,
@@ -378,11 +378,12 @@ function TablePanel({
   children,
 }: {
   playing: boolean;
-  box: { x: number; y: number; w: number; h: number };
+  y: number;
+  h: number;
   eyebrow: string;
   title: string;
   columns: string[];
-  footer: string;
+  footer: React.ReactNode;
   accent?: boolean;
   float: { amplitude: number; period: number; phase: number };
   children: React.ReactNode;
@@ -394,50 +395,50 @@ function TablePanel({
       float={float}
       className="absolute overflow-hidden"
       style={{
-        left: px(box.x),
-        top: py(box.y),
-        width: px(box.w),
-        height: py(box.h),
+        left: px(PANEL_X),
+        top: py(y),
+        width: px(PANEL_W),
+        height: py(h),
         backgroundColor: accent ? "#fff" : "var(--color-paper)",
         borderColor: accent ? "var(--color-brand-300)" : "var(--color-hair)",
-        borderRadius: "clamp(0.75rem, 2.5cqw, 1.5rem)",
+        borderRadius: "clamp(0.75rem, 4.444cqw, 1.25rem)",
         zIndex: 20,
       }}
     >
       <div
-        className="border-hair border-b"
-        style={{ padding: `${cq(16)} ${cq(20)} ${cq(12)}` }}
+        className="border-hair flex items-baseline border-b"
+        style={{ padding: `${cq(12)} ${cq(ROW_X)}`, gap: cq(8) }}
       >
-        <p
-          className="text-muted font-semibold tracking-[0.08em] uppercase"
-          style={{ fontSize: ts(9) }}
+        <span
+          className="text-muted shrink-0 font-semibold tracking-[0.08em] uppercase"
+          style={{ fontSize: ts(10) }}
         >
           {eyebrow}
-        </p>
-        <p
+        </span>
+        <span
           className="text-ink truncate font-medium"
-          style={{ fontSize: ts(13), marginTop: cq(4) }}
+          style={{ fontSize: ts(12) }}
         >
           {title}
-        </p>
+        </span>
       </div>
 
       <div
         className="absolute grid items-center"
         style={{
           left: cq(ROW_X),
-          top: cq(56),
+          top: cq(HEAD_Y),
           width: cq(ROW_W),
-          height: cq(20),
+          height: cq(16),
           gridTemplateColumns: GRID,
-          padding: `0 ${cq(12)}`,
+          padding: `0 ${cq(10)}`,
         }}
       >
         {columns.map((column) => (
           <span
             key={column}
             className="text-muted truncate font-medium"
-            style={{ fontSize: ts(9) }}
+            style={{ fontSize: ts(10) }}
           >
             {column}
           </span>
@@ -446,12 +447,17 @@ function TablePanel({
 
       {children}
 
-      <span
-        className="text-muted absolute"
-        style={{ left: cq(ROW_X), bottom: cq(18), fontSize: ts(9) }}
+      <div
+        className="absolute flex items-center justify-between"
+        style={{
+          left: cq(ROW_X),
+          top: cq(FOOTER_Y),
+          width: cq(ROW_W),
+          height: cq(22),
+        }}
       >
         {footer}
-      </span>
+      </div>
     </FloatPanel>
   );
 }

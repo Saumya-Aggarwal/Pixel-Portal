@@ -8,11 +8,23 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
+  cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { CrawlGraphPhone } from "@/components/sections/service/visuals/CrawlGraphPhone";
+import {
+  CRAWL_PAGES_TEXT,
+  CRAWL_TITLE,
+  LOOP,
+  NODES,
+  OUR_POSITION,
+  SERP_ROWS,
+  SERP_TITLE,
+  at,
+  issuesOf,
+} from "@/components/sections/service/visuals/crawlGraphShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -28,22 +40,31 @@ import { EASE } from "@/lib/motion";
  * diagnostic node, which undercuts the fan-out; three travel in parallel here.
  * And the target read "Pos #1" — on an SEO agency page a guaranteed first
  * position reads as a promise rather than an illustration, so it lands at #3.
+ *
+ * The phone stage keeps the parallelism and drops the fan; see
+ * `CrawlGraphPhone` for why.
  */
 
-const LOOP = 8;
-const at = (seconds: number) => beat(seconds, LOOP);
+export function CrawlGraph() {
+  return (
+    <>
+      <div className="md:hidden">
+        <CrawlGraphPhone />
+      </div>
+      <div className="hidden md:block">
+        <CrawlGraphDesktop />
+      </div>
+    </>
+  );
+}
 
-/** Diagnostics. `issues` is what makes these read as an audit, not a flowchart. */
-const NODES = [
-  { label: "Core Web Vitals", issues: "12 issues", y: 120 },
-  { label: "Indexation", issues: "348 URLs", y: 280 },
-  { label: "Content Gaps", issues: "26 terms", y: 440 },
-];
+/** Where each diagnostic sits on this canvas, which is this canvas's business. */
+const NODE_Y = [120, 280, 440];
 
 const ROOT = { x: 240, y: 320 };
 const TARGET = { x: 680, y: 320 };
 
-export function CrawlGraph() {
+function CrawlGraphDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -57,7 +78,7 @@ export function CrawlGraph() {
         className="pointer-events-none absolute inset-0 size-full"
       >
         {NODES.map((node, i) => {
-          const ny = node.y + 40;
+          const ny = NODE_Y[i] + 40;
           return (
             <g key={node.label}>
               {/* Root fans out. Elbowed rather than straight so the three
@@ -99,12 +120,23 @@ export function CrawlGraph() {
                         duration: LOOP,
                         times: [0, at(1.0), at(1.8), at(2.8), 1],
                         repeat: Infinity,
-                        ease: "easeInOut",
+                        // One easing per hop, not one for the sequence: a bare
+                        // `ease` beside `times` is handed to WAAPI as the
+                        // easing of the whole effect, which remaps the loop's
+                        // clock and lands every offset somewhere else.
+                        ease: ["easeInOut", "linear", "easeInOut", "linear"],
                         delay: i * 0.18,
                         opacity: {
                           duration: LOOP,
                           times: [0, at(0.2), at(2.4), at(2.8), at(3.0), 1],
                           repeat: Infinity,
+                          ease: [
+                            "easeInOut",
+                            "linear",
+                            "linear",
+                            "easeInOut",
+                            "linear",
+                          ],
                           delay: i * 0.18,
                         },
                       }
@@ -130,13 +162,13 @@ export function CrawlGraph() {
         }}
       >
         <span className="text-ink font-medium" style={{ fontSize: ts(14) }}>
-          Site Crawl
+          {CRAWL_TITLE}
         </span>
         <span
           className="text-muted"
           style={{ fontSize: ts(11), marginTop: ts(6) }}
         >
-          4,120 pages
+          {CRAWL_PAGES_TEXT}
         </span>
       </FloatPanel>
 
@@ -148,7 +180,7 @@ export function CrawlGraph() {
           className="absolute flex flex-col justify-center"
           style={{
             left: px(360),
-            top: py(node.y),
+            top: py(NODE_Y[i]),
             width: px(160),
             height: py(80),
             padding: `0 ${ts(18)}`,
@@ -167,91 +199,118 @@ export function CrawlGraph() {
               className="bg-brand-400 rounded-full"
               style={{ width: ts(5), height: ts(5) }}
             />
-            {node.issues}
+            {issuesOf(node)}
           </span>
         </FloatPanel>
       ))}
 
-      {/* The outcome. A SERP with the tracked result climbing into place. */}
-      <FloatPanel
-        playing={playing}
-        focal
-        interactive
-        float={{ amplitude: 6, period: 13, phase: 0.5 }}
-        className="absolute overflow-hidden"
+      {/*
+        The outcome. A SERP with the tracked result climbing into place.
+
+        The only panel here whose height is not stated. Everything inside it is
+        type, and `ts` floors at 10px, so its content stands at 214 units of
+        this canvas where the illustration renders 515 wide and 162 where it
+        renders 851 — no single figure fits the range, and the one it had
+        clipped the third result at the narrow end. So it takes the height of
+        what it holds, and the wrapper hangs it from the point the three
+        leaders converge on rather than from a top edge that would have to move
+        with it. The wrapper does the centring because the bob owns the panel's
+        own transform.
+      */}
+      <div
+        className="absolute"
         style={{
           left: px(680),
-          top: py(220),
+          top: py(TARGET.y),
           width: px(220),
-          height: py(200),
-          padding: ts(20),
-          borderRadius: "clamp(0.75rem, 3.333cqw, 2rem)",
-          borderColor: "var(--color-brand-300)",
+          transform: "translateY(-50%)",
         }}
       >
-        <span className="text-ink-soft" style={{ fontSize: ts(12) }}>
-          Target Keyword
-        </span>
-        <div style={{ marginTop: ts(14) }}>
-          {[1, 2, 3].map((pos) => {
-            const ours = pos === 3;
-            return (
-              <motion.div
-                key={pos}
-                className="flex items-center"
-                style={{ gap: ts(10), marginTop: pos === 1 ? 0 : ts(9) }}
-                initial={false}
-                animate={
-                  playing && ours
-                    ? {
-                        opacity: [0.25, 0.25, 1, 1, 0.25],
-                        x: [10, 10, 0, 0, 10],
-                      }
-                    : { opacity: ours ? 1 : 0.35, x: 0 }
-                }
-                transition={
-                  playing && ours
-                    ? {
-                        duration: LOOP,
-                        times: [0, at(2.8), at(4.0), at(7.5), 1],
-                        repeat: Infinity,
-                        ease: EASE.out,
-                      }
-                    : undefined
-                }
-              >
-                <span
-                  className={
-                    ours
-                      ? "font-display text-brand-600 shrink-0 font-semibold tabular-nums"
-                      : "font-display text-muted shrink-0 font-semibold tabular-nums"
+        <FloatPanel
+          playing={playing}
+          focal
+          interactive
+          float={{ amplitude: 6, period: 13, phase: 0.5 }}
+          className="overflow-hidden"
+          style={{
+            padding: ts(20),
+            borderRadius: "clamp(0.75rem, 3.333cqw, 2rem)",
+            borderColor: "var(--color-brand-300)",
+          }}
+        >
+          <span className="text-ink-soft" style={{ fontSize: ts(12) }}>
+            {SERP_TITLE}
+          </span>
+          {/*
+          `cq` rather than `ts` for every box in here.
+          `ts` floors at 10px, which is right for a label and wrong for a 4-unit
+          bar: at 1440 each of these rules was rendering at 10px instead of
+          3.9, so a row stood 30px tall instead of 13 and the third result's
+          second rule fell outside the panel and was clipped away. The rows
+          have been the wrong size and the last one incomplete for as long as
+          this drawing has existed.
+        */}
+          <div style={{ marginTop: cq(14) }}>
+            {SERP_ROWS.map((pos) => {
+              const ours = pos === OUR_POSITION;
+              return (
+                <motion.div
+                  key={pos}
+                  className="flex items-center"
+                  style={{ gap: cq(10), marginTop: pos === 1 ? 0 : cq(9) }}
+                  initial={false}
+                  animate={
+                    playing && ours
+                      ? {
+                          opacity: [0.25, 0.25, 1, 1, 0.25],
+                          x: [10, 10, 0, 0, 10],
+                        }
+                      : { opacity: ours ? 1 : 0.35, x: 0 }
                   }
-                  style={{ fontSize: ts(12) }}
-                >
-                  #{pos}
-                </span>
-                <span
-                  className="flex-1"
-                  style={{ display: "grid", gap: ts(4) }}
+                  transition={
+                    playing && ours
+                      ? {
+                          duration: LOOP,
+                          times: [0, at(2.8), at(4.0), at(7.5), 1],
+                          repeat: Infinity,
+                          ease: ["linear", EASE.out, "linear", EASE.inOut],
+                        }
+                      : undefined
+                  }
                 >
                   <span
                     className={
                       ours
-                        ? "bg-brand-300 block rounded-full"
-                        : "bg-hair block rounded-full"
+                        ? "font-display text-brand-600 shrink-0 font-semibold tabular-nums"
+                        : "font-display text-muted shrink-0 font-semibold tabular-nums"
                     }
-                    style={{ height: ts(5), width: ours ? "100%" : "72%" }}
-                  />
+                    style={{ fontSize: ts(12) }}
+                  >
+                    #{pos}
+                  </span>
                   <span
-                    className="bg-hair block rounded-full"
-                    style={{ height: ts(4), width: "48%" }}
-                  />
-                </span>
-              </motion.div>
-            );
-          })}
-        </div>
-      </FloatPanel>
+                    className="flex-1"
+                    style={{ display: "grid", gap: cq(4) }}
+                  >
+                    <span
+                      className={
+                        ours
+                          ? "bg-brand-300 block rounded-full"
+                          : "bg-hair block rounded-full"
+                      }
+                      style={{ height: cq(5), width: ours ? "100%" : "72%" }}
+                    />
+                    <span
+                      className="bg-hair block rounded-full"
+                      style={{ height: cq(4), width: "48%" }}
+                    />
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </FloatPanel>
+      </div>
     </div>
   );
 }

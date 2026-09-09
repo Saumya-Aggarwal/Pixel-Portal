@@ -26,19 +26,19 @@ export function CategoryHeroVisual({ slug }: { slug: string }) {
   switch (slug) {
     case "digital-marketing":
       return (
-        <div className="mt-14 lg:mt-20">
+        <div className="mt-8 md:mt-14 lg:mt-20">
           <JourneyLedger />
         </div>
       );
     case "website-development":
       return (
-        <div className="mt-14 lg:mt-20">
+        <div className="mt-8 md:mt-14 lg:mt-20">
           <ArcDial />
         </div>
       );
     case "software-development":
       return (
-        <div className="mt-14 lg:mt-20">
+        <div className="mt-8 md:mt-14 lg:mt-20">
           <Workbench />
         </div>
       );

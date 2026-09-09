@@ -10,12 +10,23 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { SocialFeedPhone } from "@/components/sections/service/visuals/SocialFeedPhone";
+import {
+  CALENDAR,
+  CALENDAR_TITLE,
+  HANDLE,
+  LOOP,
+  POSTS,
+  QUEUE_BARS,
+  QUEUE_TITLE,
+  SLA,
+  at,
+} from "@/components/sections/service/visuals/socialFeedShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -32,10 +43,23 @@ import { EASE } from "@/lib/motion";
  *
  * 8s loop. A post publishes, the feed scrolls one card, the new post's
  * engagement climbs, then 3.3s of stillness while the reader takes it in.
+ *
+ * The phone stage keeps the operation and turns the feed into a dealt pile of
+ * cards; see `SocialFeedPhone` for why.
  */
 
-const LOOP = 8;
-const at = (seconds: number) => beat(seconds, LOOP);
+export function SocialFeed() {
+  return (
+    <>
+      <div className="md:hidden">
+        <SocialFeedPhone />
+      </div>
+      <div className="hidden md:block">
+        <SocialFeedDesktop />
+      </div>
+    </>
+  );
+}
 
 /**
  * Scroll distance: one card plus its gap.
@@ -46,14 +70,10 @@ const at = (seconds: number) => beat(seconds, LOOP);
  */
 const SCROLL = "-34.375%";
 
-const CALENDAR = [
-  ["Mon", "Carousel · Brand"],
-  ["Wed", "Reel · Product"],
-  ["Thu", "Case study"],
-  ["Sat", "Community AMA"],
-];
+/** The three most recent. The oldest exists for the phone's pile only. */
+const SHOWN = POSTS.slice(1);
 
-export function SocialFeed() {
+function SocialFeedDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -134,7 +154,7 @@ export function SocialFeed() {
         }}
       >
         <p className="text-ink font-medium" style={{ fontSize: ts(14) }}>
-          Q3 Content Calendar
+          {CALENDAR_TITLE}
         </p>
         <div style={{ marginTop: ts(14) }}>
           {CALENDAR.map(([day, slot], i) => (
@@ -190,13 +210,13 @@ export function SocialFeed() {
         }}
       >
         <p className="text-ink font-medium" style={{ fontSize: ts(14) }}>
-          Publishing Queue
+          {QUEUE_TITLE}
         </p>
         <div
           className="flex items-end"
           style={{ gap: ts(6), marginTop: ts(18), height: ts(52) }}
         >
-          {[38, 22, 46, 30, 52, 26, 34].map((h, i) => (
+          {QUEUE_BARS.map((h, i) => (
             <motion.span
               key={i}
               className="bg-brand-200 flex-1 rounded-t-sm"
@@ -219,7 +239,7 @@ export function SocialFeed() {
       </FloatPanel>
 
       <div className="absolute" style={{ left: px(280), top: py(316) }}>
-        <CalloutChip style={{ fontSize: ts(11) }}>SLA: &lt;15 min</CalloutChip>
+        <CalloutChip style={{ fontSize: ts(11) }}>{SLA}</CalloutChip>
       </div>
 
       {/* ---- Output: the feed ---- */}
@@ -246,49 +266,59 @@ export function SocialFeed() {
             style={{ width: ts(28), height: ts(28) }}
           />
           <span className="text-ink font-medium" style={{ fontSize: ts(14) }}>
-            @pixel_portal
+            {HANDLE}
           </span>
         </div>
 
-        {/* Cards live in one track so a single y animation scrolls the feed.
-            `top` is a percentage of the phone panel, not the canvas — the
-            header occupies the first 80 of its 520. */}
-        <motion.div
-          className="absolute inset-x-0 flex flex-col items-center"
-          style={{ top: "15.385%", gap: cq(20) }}
-          initial={false}
-          animate={
-            playing ? { y: ["0%", "0%", SCROLL, SCROLL, "0%"] } : { y: SCROLL }
-          }
-          transition={
-            playing
-              ? {
-                  duration: LOOP,
-                  times: [0, at(1.2), at(2.7), at(7.5), 1],
-                  repeat: Infinity,
-                  ease: EASE.out,
-                }
-              : undefined
-          }
+        {/* The scroll viewport, clipping the track to the screen below the
+            handle. Without it the track was positioned in the panel itself and
+            painted over the header: a card travelling 220 units up puts its
+            body across the first 60 of the panel, so for the five seconds the
+            feed sat scrolled the handle was behind a post. `top` is a
+            percentage of the phone panel, not the canvas — the header occupies
+            the first 80 of its 520. */}
+        <div
+          className="absolute inset-x-0 bottom-0 overflow-hidden"
+          style={{ top: "15.385%" }}
         >
-          <Post
-            caption="Behind the rebrand — three weeks of type tests."
-            age="2h ago"
-            lift={14.2}
-          />
-          <Post
-            caption="Replatforming Northwind in eleven weeks."
-            age="5h ago"
-            lift={9.1}
-          />
-          <Post
-            caption="What forty assets a month actually looks like."
-            age="Just now"
-            lift={18.4}
-            fresh
-            playing={playing}
-          />
-        </motion.div>
+          {/* Cards live in one track so a single y animation scrolls the feed. */}
+          <motion.div
+            className="flex flex-col items-center"
+            style={{ gap: cq(20) }}
+            initial={false}
+            animate={
+              playing
+                ? { y: ["0%", "0%", SCROLL, SCROLL, "0%"] }
+                : { y: SCROLL }
+            }
+            transition={
+              playing
+                ? {
+                    duration: LOOP,
+                    times: [0, at(1.2), at(2.7), at(7.5), 1],
+                    repeat: Infinity,
+                    // One easing per hop, not one for the sequence: a bare
+                    // `ease` beside `times` becomes the easing of the whole
+                    // effect, so expo-out was remapping the loop's clock and
+                    // running this storyboard through in its first third. See
+                    // the note in `SocialFeedPhone`.
+                    ease: ["linear", EASE.out, "linear", EASE.inOut],
+                  }
+                : undefined
+            }
+          >
+            {SHOWN.map((post, i) => (
+              <Post
+                key={post.caption}
+                caption={post.caption}
+                age={post.age}
+                lift={post.lift}
+                fresh={i === SHOWN.length - 1}
+                playing={playing}
+              />
+            ))}
+          </motion.div>
+        </div>
       </FloatPanel>
     </div>
   );

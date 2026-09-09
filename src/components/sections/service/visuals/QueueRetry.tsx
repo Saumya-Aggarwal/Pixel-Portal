@@ -8,12 +8,23 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { QueueRetryPhone } from "@/components/sections/service/visuals/QueueRetryPhone";
+import {
+  ATTEMPTS,
+  COUNTS,
+  COUNT_TIMES,
+  FAIL_IN,
+  FAIL_OUT,
+  FAIL_TIMES,
+  LOOP,
+  Swap,
+  at,
+} from "@/components/sections/service/visuals/queueRetryShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -43,9 +54,6 @@ import { EASE } from "@/lib/motion";
  * last row of the counts and the routing line both hung past the panel edge.
  */
 
-const LOOP = 10;
-const at = (seconds: number) => beat(seconds, LOOP);
-
 /** Rail height, and the midline of both system panels. */
 const RAIL_Y = 205;
 const JUNCTION_X = 480;
@@ -62,29 +70,20 @@ const PAYLOAD = { w: 150, h: 36 };
 const PAYLOAD_REST_X = JUNCTION_X - PAYLOAD.w / 2;
 const PAYLOAD_REST_Y = 455;
 
-const ATTEMPTS = [
-  ["Attempt 1", "+2s"],
-  ["Attempt 2", "+8s"],
-  ["Attempt 3", "+32s"],
-];
-
-/** TODO(content): illustrative figures. */
-const COUNTS = [
-  { label: "Delivered · 24h", before: "20,000", after: "20,000", accent: true },
-  { label: "Retried", before: "200", after: "203" },
-  { label: "Dead-lettered", before: "3", after: "4" },
-  { label: "Replayed", before: "3", after: "3" },
-];
-
-/** The window in which the target is rejecting writes. */
-const FAIL_TIMES = [0, at(1.15), at(1.25), at(9.0), at(9.4), 1];
-const FAIL_OUT = [1, 1, 0, 0, 1, 1];
-const FAIL_IN = [0, 0, 1, 1, 0, 0];
-
-/** Counts move once the message has been routed away. */
-const COUNT_TIMES = [0, at(3.4), at(3.7), at(9.0), at(9.4), 1];
-
 export function QueueRetry() {
+  return (
+    <>
+      <div className="md:hidden">
+        <QueueRetryPhone />
+      </div>
+      <div className="hidden md:block">
+        <QueueRetryDesktop />
+      </div>
+    </>
+  );
+}
+
+function QueueRetryDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   const fail = playing
@@ -413,55 +412,6 @@ export function QueueRetry() {
 
       <Payload playing={playing} />
     </div>
-  );
-}
-
-/**
- * Two states in one slot, cross-faded on a beat.
- *
- * The reserved width keeps the row from reflowing when the value changes
- * length, which is what makes this read as a field updating rather than as
- * layout settling.
- */
-function Swap({
-  playing,
-  at: beatAt,
-  before,
-  after,
-  width,
-  align = "right",
-}: {
-  playing: boolean;
-  at: number;
-  before: React.ReactNode;
-  after: React.ReactNode;
-  width?: string;
-  align?: "left" | "right";
-}) {
-  const times = [0, at(beatAt), at(beatAt + 0.3), at(9.0), at(9.4), 1];
-  const transition = playing
-    ? { duration: LOOP, times, repeat: Infinity }
-    : undefined;
-
-  return (
-    <span className="relative block" style={{ width, minWidth: width }}>
-      <motion.span
-        className={align === "left" ? "absolute left-0" : "absolute right-0"}
-        initial={false}
-        animate={playing ? { opacity: [1, 1, 0, 0, 1, 1] } : { opacity: 0 }}
-        transition={transition}
-      >
-        {before}
-      </motion.span>
-      <motion.span
-        className={align === "left" ? "absolute left-0" : "absolute right-0"}
-        initial={false}
-        animate={playing ? { opacity: [0, 0, 1, 1, 0, 0] } : { opacity: 1 }}
-        transition={transition}
-      >
-        {after}
-      </motion.span>
-    </span>
   );
 }
 

@@ -39,10 +39,11 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
  * the current value. Restarting from zero after every hover reads as the
  * illustration flinching away from the reader.
  *
- * Reduced motion and coarse pointers both resolve to `t = 1`, the completed
- * frame. Reduced motion because that is the rule for this whole set; coarse
- * pointers because there is no hover on touch, and an autoplaying hero that
- * cannot be scrubbed is worse than a settled one that can be read.
+ * Reduced motion resolves to `t = 1`, the completed frame. Coarse pointers
+ * used to as well: there is no hover on touch, and an autoplaying *desktop*
+ * drawing that cannot be scrubbed is worse than a settled one. Phone stages
+ * opt back into autoplay with `autoplayTouch` — they are built to be read
+ * while moving, and they drive `t` by tap and swipe instead of hover.
  */
 export function useScrubPlayhead<T extends HTMLElement>({
   stops,
@@ -50,6 +51,8 @@ export function useScrubPlayhead<T extends HTMLElement>({
   travel = 0.9,
   settle = 2.4,
   rewind = 0.6,
+  autoplayTouch = false,
+  rewindJump = false,
 }: {
   /** Number of stations. Stop `i` sits at `i / (stops - 1)`. */
   stops: number;
@@ -61,6 +64,16 @@ export function useScrubPlayhead<T extends HTMLElement>({
   settle?: number;
   /** Seconds to return to the start. Short: this is a reset, not a step. */
   rewind?: number;
+  /**
+   * Autoplay on coarse pointers, and honour `lockTo` / `nudge` from tap and
+   * swipe. Hover-scrub stays fine-pointer only.
+   */
+  autoplayTouch?: boolean;
+  /**
+   * After the last settle, snap back to `t = 0` instead of interpolating.
+   * A reverse scrub reads as the journey running backwards.
+   */
+  rewindJump?: boolean;
 }) {
   const ref = useRef<T>(null);
   const inView = useInView(ref, { amount: 0.3 });
@@ -84,6 +97,7 @@ export function useScrubPlayhead<T extends HTMLElement>({
   }, []);
 
   const interactive = finePointer && !prefersReduced;
+  const canAutoplay = !prefersReduced && (finePointer || autoplayTouch);
 
   const t = useMotionValue(1);
 
@@ -96,6 +110,8 @@ export function useScrubPlayhead<T extends HTMLElement>({
 
   const auto = useRef<AnimationPlaybackControls | null>(null);
   const locked = useRef(false);
+  const resumeTimer = useRef<number>(0);
+  const touchBooted = useRef(false);
 
   /**
    * The autoplay track: arrive, dwell, travel, … settle, rewind.
@@ -118,15 +134,17 @@ export function useScrubPlayhead<T extends HTMLElement>({
       offsets.push(clock);
       if (i < stops - 1) clock += travel;
     }
-    clock += rewind;
-    values.push(0);
-    offsets.push(clock);
+    if (!rewindJump) {
+      clock += rewind;
+      values.push(0);
+      offsets.push(clock);
+    }
     return {
       values,
       times: offsets.map((offset) => offset / clock),
       duration: clock,
     };
-  }, [stops, dwell, travel, settle, rewind]);
+  }, [stops, dwell, travel, settle, rewind, rewindJump]);
 
   /**
    * Time at which the autoplay track holds `value`, scanning the forward pass
@@ -136,7 +154,8 @@ export function useScrubPlayhead<T extends HTMLElement>({
   const seek = useCallback(
     (value: number) => {
       const { values, times, duration } = track;
-      for (let k = 0; k < values.length - 2; k += 1) {
+      const last = rewindJump ? values.length - 1 : values.length - 2;
+      for (let k = 0; k < last; k += 1) {
         const a = values[k];
         const b = values[k + 1];
         if (value >= Math.min(a, b) && value <= Math.max(a, b)) {
@@ -147,12 +166,17 @@ export function useScrubPlayhead<T extends HTMLElement>({
       }
       return 0;
     },
-    [track],
+    [track, rewindJump],
   );
 
   const stopAuto = useCallback(() => {
     auto.current?.stop();
     auto.current = null;
+  }, []);
+
+  const clearResume = useCallback(() => {
+    window.clearTimeout(resumeTimer.current);
+    resumeTimer.current = 0;
   }, []);
 
   const startAuto = useCallback(
@@ -171,17 +195,57 @@ export function useScrubPlayhead<T extends HTMLElement>({
     [seek, stopAuto, t, track],
   );
 
+  /**
+   * Latest `startAuto`, for the resume timer to reach without re-arming itself
+   * every time the callback identity changes. Written in an effect rather than
+   * during render — the timer only ever reads it after a commit, so there is
+   * nothing to gain from the earlier write and a lint rule against taking it.
+   */
+  const startAutoRef = useRef(startAuto);
   useEffect(() => {
-    if (!interactive || !inView) {
+    startAutoRef.current = startAuto;
+  }, [startAuto]);
+
+  const armResume = useCallback(() => {
+    if (!autoplayTouch || prefersReduced) return;
+    clearResume();
+    resumeTimer.current = window.setTimeout(() => {
+      locked.current = false;
+      startAutoRef.current(t.get());
+    }, 6000);
+  }, [autoplayTouch, clearResume, prefersReduced, t]);
+
+  useEffect(() => {
+    if (!canAutoplay || !inView) {
       stopAuto();
-      // Settled rather than parked mid-sequence: an illustration that is not
-      // playing must still show its completed argument.
-      if (!interactive) t.set(1);
+      clearResume();
+      // Reduced motion always shows the completed argument. Coarse pointers
+      // on a desktop drawing do too. A touch stage that can autoplay keeps
+      // whatever frame it was on when it left the viewport.
+      if (prefersReduced || (!finePointer && !autoplayTouch)) t.set(1);
       return;
     }
-    startAuto(t.get());
-    return stopAuto;
-  }, [interactive, inView, startAuto, stopAuto, t]);
+    let from = t.get();
+    if (autoplayTouch && !touchBooted.current) {
+      touchBooted.current = true;
+      from = 0;
+    }
+    startAuto(from);
+    return () => {
+      stopAuto();
+      clearResume();
+    };
+  }, [
+    autoplayTouch,
+    canAutoplay,
+    clearResume,
+    finePointer,
+    inView,
+    prefersReduced,
+    startAuto,
+    stopAuto,
+    t,
+  ]);
 
   const scrubTo = useCallback(
     (value: number) => {
@@ -230,12 +294,25 @@ export function useScrubPlayhead<T extends HTMLElement>({
    */
   const lockToValue = useCallback(
     (value: number) => {
-      if (!interactive) return;
+      if (prefersReduced) {
+        if (autoplayTouch) t.set(Math.min(1, Math.max(0, value)));
+        return;
+      }
+      if (!finePointer && !autoplayTouch) return;
       locked.current = true;
       stopAuto();
       scrubTo(value);
+      armResume();
     },
-    [interactive, scrubTo, stopAuto],
+    [
+      armResume,
+      autoplayTouch,
+      finePointer,
+      prefersReduced,
+      scrubTo,
+      stopAuto,
+      t,
+    ],
   );
 
   /** Hold the playhead on a station while the pointer is over it. */
@@ -246,9 +323,19 @@ export function useScrubPlayhead<T extends HTMLElement>({
     [lockToValue, stops],
   );
 
+  /** Snap one stop left or right. Used by the phone-stage swipe. */
+  const nudge = useCallback(
+    (delta: number) => {
+      const current = Math.round(t.get() * (stops - 1));
+      lockTo(current + delta);
+    },
+    [lockTo, stops, t],
+  );
+
   const release = useCallback(() => {
     locked.current = false;
-  }, []);
+    clearResume();
+  }, [clearResume]);
 
   return {
     ref,
@@ -260,6 +347,7 @@ export function useScrubPlayhead<T extends HTMLElement>({
     handlers,
     lockTo,
     lockToValue,
+    nudge,
     release,
   };
 }

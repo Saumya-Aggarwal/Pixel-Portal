@@ -7,6 +7,15 @@ import { Backlight } from "@/components/sections/service/visuals/chrome/Backligh
 import { FloatPanel } from "@/components/sections/service/visuals/chrome/FloatPanel";
 import { GridGround } from "@/components/sections/service/visuals/chrome/GridGround";
 import { cq, px, py, ts } from "@/components/sections/service/visuals/canvas";
+import { LayeredPlanesPhone } from "@/components/sections/service/visuals/LayeredPlanesPhone";
+import {
+  COMPONENTS,
+  FIELDS,
+  LCP_FROM,
+  LCP_LABEL,
+  LCP_TO,
+  PLANES as PLANE_CONTENT,
+} from "@/components/sections/service/visuals/layeredPlanesShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 import { EASE } from "@/lib/motion";
 
@@ -25,39 +34,37 @@ import { EASE } from "@/lib/motion";
  * Each plane's heading is positioned in the corner its neighbour does not
  * cover — back plane top-right, the other two top-left. That is load-bearing,
  * not styling: swap them and the stack hides its own labels.
+ *
+ * The phone stage stops the planes overlapping and lets them recede instead;
+ * see `LayeredPlanesPhone` for why.
  */
 
-const PLANES = [
-  {
-    id: "data",
-    title: "CMS & Data Layer",
-    x: 440,
-    y: 80,
-    align: "right" as const,
-    delay: 0,
-  },
-  {
-    id: "system",
-    title: "Component System",
-    x: 260,
-    y: 160,
-    align: "left" as const,
-    delay: 0.6,
-  },
-  {
-    id: "live",
-    title: "Live Interface",
-    x: 80,
-    y: 240,
-    align: "left" as const,
-    delay: 1.2,
-  },
-];
+export function LayeredPlanes() {
+  return (
+    <>
+      <div className="md:hidden">
+        <LayeredPlanesPhone />
+      </div>
+      <div className="hidden md:block">
+        <LayeredPlanesDesktop />
+      </div>
+    </>
+  );
+}
+
+/** Where each plane sits on this canvas, which is this canvas's business. */
+const PLANES = PLANE_CONTENT.map((plane, i) => ({
+  ...plane,
+  x: 440 - i * 180,
+  y: 80 + i * 80,
+  align: (i === 0 ? "right" : "left") as "left" | "right",
+  delay: i * 0.6,
+}));
 
 const PLANE_W = 400;
 const PLANE_H = 280;
 
-export function LayeredPlanes() {
+function LayeredPlanesDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -129,7 +136,7 @@ export function LayeredPlanes() {
         }}
       >
         <span className="text-ink-soft" style={{ fontSize: ts(12) }}>
-          LCP Score
+          {LCP_LABEL}
         </span>
         {/* Counts down — the figure improving is the point. */}
         <span
@@ -137,8 +144,8 @@ export function LayeredPlanes() {
           style={{ fontSize: ts(24), marginTop: ts(10) }}
         >
           <CountUp
-            value={0.8}
-            from={2.4}
+            value={LCP_TO}
+            from={LCP_FROM}
             decimals={1}
             suffix="s"
             delay={2}
@@ -154,12 +161,7 @@ export function LayeredPlanes() {
 function DataLayer() {
   return (
     <div style={{ display: "grid", gap: cq(9) }}>
-      {[
-        ["title", "string"],
-        ["hero.image", "asset"],
-        ["sections[]", "block"],
-        ["seo.meta", "object"],
-      ].map(([field, type]) => (
+      {FIELDS.map(([field, type]) => (
         <div
           key={field}
           className="border-hair flex items-center justify-between border-b"
@@ -187,17 +189,15 @@ function ComponentSystem() {
         gap: cq(9),
       }}
     >
-      {["Hero", "Card", "Nav", "Form", "Table", "CTA", "Tabs", "Foot"].map(
-        (name) => (
-          <div
-            key={name}
-            className="border-hair bg-brand-50/60 flex items-center justify-center rounded-md border"
-            style={{ height: cq(38), fontSize: ts(10) }}
-          >
-            <span className="text-brand-800">{name}</span>
-          </div>
-        ),
-      )}
+      {COMPONENTS.map((name) => (
+        <div
+          key={name}
+          className="border-hair bg-brand-50/60 flex items-center justify-center rounded-md border"
+          style={{ height: cq(38), fontSize: ts(10) }}
+        >
+          <span className="text-brand-800">{name}</span>
+        </div>
+      ))}
     </div>
   );
 }

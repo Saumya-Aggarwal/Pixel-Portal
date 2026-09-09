@@ -9,12 +9,25 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { PipelineStairPhone } from "@/components/sections/service/visuals/PipelineStairPhone";
+import {
+  BARS,
+  COLLECTION,
+  LOOP,
+  MRR,
+  MRR_DELTA,
+  MRR_LABEL,
+  SCHEMA,
+  SOURCES,
+  STAGES,
+  WAREHOUSE,
+  at,
+} from "@/components/sections/service/visuals/pipelineStairShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -37,19 +50,9 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * it is what the stage produces, not a label stuck to a line.
  */
 
-const LOOP = 10;
-const at = (seconds: number) => beat(seconds, LOOP);
-
 const PANEL_W = 190;
 const PANEL_H = 420;
 const GAP = 47;
-
-const STAGES = [
-  { id: "src", title: "Data Sources", payload: "RAW_JSON" },
-  { id: "col", title: "Collection", payload: "CLEAN_EVENTS" },
-  { id: "whs", title: "Warehouse", payload: "AGGREGATES" },
-  { id: "rep", title: "Reporting", payload: "BOARD_DECK" },
-];
 
 const stageX = (i: number) => 30 + i * (PANEL_W + GAP);
 const stageY = (i: number) => 60 + i * 40;
@@ -66,28 +69,20 @@ const HOPS = [0, 1, 2].map((i) => ({
   t: i * 1.5,
 }));
 
-const SOURCES = [
-  ["Stripe Webhooks", "1.2k/day"],
-  ["Postgres DB", "48 tables"],
-  ["Segment Track", "22 events"],
-];
-
-const COLLECTION = [
-  ["Snowplow Pipeline", "streaming"],
-  ["Schema Validation", "0 rejects"],
-  ["PII Hashing", "SHA-256"],
-];
-
-const SCHEMA = [
-  ["user_id", "string"],
-  ["event_ts", "timestamp"],
-  ["source", "string"],
-  ["revenue", "numeric"],
-];
-
-const BARS = [38, 52, 44, 68, 60, 82];
-
 export function PipelineStair() {
+  return (
+    <>
+      <div className="md:hidden">
+        <PipelineStairPhone />
+      </div>
+      <div className="hidden md:block">
+        <PipelineStairDesktop />
+      </div>
+    </>
+  );
+}
+
+function PipelineStairDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -199,13 +194,13 @@ export function PipelineStair() {
                     className="text-ink font-medium"
                     style={{ fontSize: ts(11) }}
                   >
-                    BigQuery
+                    {WAREHOUSE[0]}
                   </span>
                   <span
                     className="text-muted tabular-nums"
                     style={{ fontSize: ts(10) }}
                   >
-                    1M rows
+                    {WAREHOUSE[1]}
                   </span>
                 </div>
                 <div style={{ display: "grid", gap: cq(9), marginTop: cq(14) }}>
@@ -254,25 +249,20 @@ export function PipelineStair() {
                   className="text-muted"
                   style={{ fontSize: ts(10), marginTop: cq(18) }}
                 >
-                  Monthly recurring revenue
+                  {MRR_LABEL}
                 </p>
                 {/* TODO(content): illustrative figures. */}
                 <p
                   className="font-display text-brand-600 leading-none font-semibold tracking-tight tabular-nums"
                   style={{ fontSize: ts(24), marginTop: cq(8) }}
                 >
-                  <CountUp
-                    value={40000}
-                    prefix="$"
-                    delay={4.2}
-                    duration={1.5}
-                  />
+                  <CountUp value={MRR} prefix="$" delay={4.2} duration={1.5} />
                 </p>
                 <p
                   className="text-ink-soft"
                   style={{ fontSize: ts(10), marginTop: cq(8) }}
                 >
-                  +10% vs last month
+                  {MRR_DELTA}
                 </p>
               </>
             )}

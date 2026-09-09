@@ -8,12 +8,30 @@ import { GridGround } from "@/components/sections/service/visuals/chrome/GridGro
 import {
   H,
   W,
-  beat,
   cq,
   px,
   py,
   ts,
 } from "@/components/sections/service/visuals/canvas";
+import { HeadlessSeamPhone } from "@/components/sections/service/visuals/HeadlessSeamPhone";
+import {
+  CTA,
+  FIELDS,
+  HEADLINE,
+  HOSTNAME,
+  LOOP,
+  MODEL_EYEBROW,
+  MODEL_NAME,
+  STATUS_AFTER,
+  STATUS_AFTER_OPACITY,
+  STATUS_BEFORE,
+  STATUS_BEFORE_OPACITY,
+  STATUS_TIMES,
+  SYNC_OPACITY,
+  SYNC_TIMES,
+  WIDGET_LABEL,
+  at,
+} from "@/components/sections/service/visuals/headlessSeamShared";
 import { useVisualPlayback } from "@/components/sections/service/visuals/useVisualPlayback";
 
 /**
@@ -36,9 +54,6 @@ import { useVisualPlayback } from "@/components/sections/service/visuals/useVisu
  * and the phone's top edge, because everything else there is opaque.
  */
 
-const LOOP = 8;
-const at = (seconds: number) => beat(seconds, LOOP);
-
 const SEAM_X = 480;
 
 const CMS = { x: 60, y: 60, w: 360, h: 520 };
@@ -53,13 +68,6 @@ const PHONE_MID = PHONE.y + PHONE.h / 2;
 const WIDGET_MID_X = WIDGET.x + WIDGET.w / 2;
 /** The open band between the browser's bottom and the phone's top. */
 const CROSSING_Y = 280;
-
-const FIELDS = [
-  ["Title", "String", "Q4 Launch"],
-  ["Hero_Asset", "Media", "v2-final.jpg"],
-  ["Body", "RichText", "[HTML Block]"],
-  ["CTA_Link", "URL", "/signup"],
-];
 
 /**
  * Packet keyframes, with `times` in loop fractions.
@@ -101,11 +109,20 @@ const PACKETS = [
   },
 ];
 
-/** Arrival acknowledgement. Data, so it may come and go; the panels may not. */
-const SYNC_TIMES = [0, at(1.8), at(2.0), at(3.0), at(3.2), 1];
-const SYNC_OPACITY = [0, 0, 1, 1, 0, 0];
-
 export function HeadlessSeam() {
+  return (
+    <>
+      <div className="md:hidden">
+        <HeadlessSeamPhone />
+      </div>
+      <div className="hidden md:block">
+        <HeadlessSeamDesktop />
+      </div>
+    </>
+  );
+}
+
+function HeadlessSeamDesktop() {
   const { ref, playing } = useVisualPlayback<HTMLDivElement>();
 
   return (
@@ -188,13 +205,13 @@ export function HeadlessSeam() {
       >
         <div className="border-hair border-b" style={{ padding: cq(22) }}>
           <p className="text-muted" style={{ fontSize: ts(10) }}>
-            CONTENT MODEL
+            {MODEL_EYEBROW}
           </p>
           <p
             className="text-ink font-medium"
             style={{ fontSize: ts(15), marginTop: cq(6) }}
           >
-            Campaign
+            {MODEL_NAME}
           </p>
         </div>
 
@@ -245,35 +262,31 @@ export function HeadlessSeam() {
             className="text-ink-soft absolute font-semibold tracking-[0.08em] uppercase"
             style={{ fontSize: ts(10) }}
             initial={false}
-            animate={playing ? { opacity: [1, 1, 0, 0, 1, 1] } : { opacity: 0 }}
+            animate={
+              playing ? { opacity: STATUS_BEFORE_OPACITY } : { opacity: 0 }
+            }
             transition={
               playing
-                ? {
-                    duration: LOOP,
-                    times: [0, at(0.2), at(0.4), at(7.6), at(7.8), 1],
-                    repeat: Infinity,
-                  }
+                ? { duration: LOOP, times: STATUS_TIMES, repeat: Infinity }
                 : undefined
             }
           >
-            Draft
+            {STATUS_BEFORE}
           </motion.span>
           <motion.span
             className="text-brand-700 absolute font-semibold tracking-[0.08em] uppercase"
             style={{ fontSize: ts(10) }}
             initial={false}
-            animate={playing ? { opacity: [0, 0, 1, 1, 0, 0] } : { opacity: 1 }}
+            animate={
+              playing ? { opacity: STATUS_AFTER_OPACITY } : { opacity: 1 }
+            }
             transition={
               playing
-                ? {
-                    duration: LOOP,
-                    times: [0, at(0.2), at(0.4), at(7.6), at(7.8), 1],
-                    repeat: Infinity,
-                  }
+                ? { duration: LOOP, times: STATUS_TIMES, repeat: Infinity }
                 : undefined
             }
           >
-            Published
+            {STATUS_AFTER}
           </motion.span>
         </span>
       </FloatPanel>
@@ -304,7 +317,7 @@ export function HeadlessSeam() {
               marginLeft: cq(6),
             }}
           >
-            example.com
+            {HOSTNAME}
           </span>
         </div>
         <div className="flex" style={{ padding: cq(16), gap: cq(16) }}>
@@ -317,7 +330,7 @@ export function HeadlessSeam() {
               className="text-ink block truncate font-medium"
               style={{ fontSize: ts(14) }}
             >
-              Q4 Launch
+              {HEADLINE}
             </span>
             <span style={{ display: "grid", gap: cq(7), marginTop: cq(12) }}>
               <span
@@ -338,7 +351,7 @@ export function HeadlessSeam() {
                 marginTop: cq(16),
               }}
             >
-              Sign Up
+              {CTA}
             </span>
           </span>
         </div>
@@ -370,7 +383,7 @@ export function HeadlessSeam() {
             className="text-ink block truncate font-medium"
             style={{ fontSize: ts(12), marginTop: cq(12) }}
           >
-            Q4 Launch
+            {HEADLINE}
           </span>
           <span style={{ display: "grid", gap: cq(6), marginTop: cq(10) }}>
             {["96%", "84%", "58%"].map((w) => (
@@ -385,7 +398,7 @@ export function HeadlessSeam() {
             className="bg-brand-600 grid place-items-center rounded-full font-medium text-white"
             style={{ height: cq(26), fontSize: ts(10), marginTop: cq(14) }}
           >
-            Sign Up
+            {CTA}
           </span>
         </div>
         <SyncPill playing={playing} />
@@ -403,7 +416,7 @@ export function HeadlessSeam() {
             className="text-muted font-semibold tracking-[0.08em] uppercase"
             style={{ fontSize: ts(9) }}
           >
-            Embedded Ad
+            {WIDGET_LABEL}
           </p>
           <div
             className="flex items-center"
@@ -418,7 +431,7 @@ export function HeadlessSeam() {
                 className="text-ink block truncate font-medium"
                 style={{ fontSize: ts(11) }}
               >
-                Q4 Launch
+                {HEADLINE}
               </span>
               <span
                 className="bg-hair mt-1 block rounded-full"
@@ -430,7 +443,7 @@ export function HeadlessSeam() {
             className="bg-brand-600 grid place-items-center rounded-full font-medium text-white"
             style={{ height: cq(26), fontSize: ts(10), marginTop: cq(14) }}
           >
-            Sign Up
+            {CTA}
           </span>
         </div>
         <SyncPill playing={playing} />
