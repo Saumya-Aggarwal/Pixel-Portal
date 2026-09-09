@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 import { useBoot } from "@/components/boot/BootProvider";
 import { Frame, initials } from "@/components/media/Frame";
@@ -16,6 +16,28 @@ import { DUR, EASE } from "@/lib/motion";
 import type { TeamMember } from "@/types/content";
 
 const SPLINE_SCENE = "https://prod.spline.design/NbU6scJvWHLpfXhs/scene.splinecode";
+
+/** Tailwind `lg` — the split hero, and the only width where a fixed-to-column glide is safe. */
+const LG_QUERY = "(min-width: 1024px)";
+
+function subscribeLg(onChange: () => void) {
+  const query = window.matchMedia(LG_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+const getLgSnapshot = () => window.matchMedia(LG_QUERY).matches;
+/**
+ * Assume the stacked layout through hydration. A first-visit desktop reader
+ * still has the curtain up while this reconciles, so the centred box can land
+ * a tick late without being seen; a phone reader must never start in `fixed`
+ * or the resolve has nothing coherent to settle into.
+ */
+const getLgServerSnapshot = () => false;
+
+function useIsLaptop() {
+  return useSyncExternalStore(subscribeLg, getLgSnapshot, getLgServerSnapshot);
+}
 
 /**
  * The published scene is blue. Rather than re-author it, the composited canvas
@@ -158,11 +180,15 @@ export function Hero({ specialists }: HeroProps) {
   // primitive below already handles the setting itself — a second check here
   // would be a third place for the three of them to disagree.
   const { phase, intro, markReady } = useBoot();
+  const isLaptop = useIsLaptop();
 
   const isResolved = phase === "complete";
-  /** The core keeps one centred box across every pre-resolve phase, so the
-   *  `layout` animation fires exactly once — on the hand-off to the column. */
-  const isCentred = !isResolved;
+  /** Park the core at screen centre only on the split layout. Below `lg` the
+   *  column is already stacked, and a fixed-to-relative layout animation
+   *  across that much vertical distance fails to settle — the object would
+   *  stick mid-viewport after the resolve. Small screens keep the core in
+   *  flow and rely on the scale/opacity entrance instead. */
+  const isCentred = !isResolved && isLaptop;
   /** Held at zero behind the curtain: its entrance should be the first thing
    *  through the portal, not something that already happened out of sight. */
   const coreVisible = phase === "core" || isResolved;
@@ -175,7 +201,7 @@ export function Hero({ specialists }: HeroProps) {
   const onSceneReady = useCallback(() => markReady("scene"), [markReady]);
 
   return (
-    <section className="relative -mt-18 overflow-hidden bg-white pt-18 lg:-mt-20 lg:pt-20">
+    <section className="relative -mt-18 overflow-x-clip bg-white pt-18 lg:-mt-20 lg:pt-20">
       {/* ---- Ground: faint grid, then two green blooms sitting under it ----
 
           Zero for as long as the curtain is up, then drawn in over 500ms as
@@ -208,16 +234,20 @@ export function Hero({ specialists }: HeroProps) {
       />
 
       <Container wide className="relative">
-        <div className="grid grid-cols-1 gap-y-16 pt-14 pb-24 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-x-12 lg:pt-20 lg:pb-28">
-          {/* ================= Left: the statement =================
+        {/* On small screens the stack is headline → cube → lead → cards, so the
+            object sits against the title instead of under a full lead paragraph.
+            At `lg` the copy reforms as one left column and the scene as the right. */}
+        <div className="grid grid-cols-1 gap-y-0 pt-10 pb-20 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-x-12 lg:gap-y-0 lg:pt-20 lg:pb-28">
+          {/* ================= Headline =================
 
-              Keyed on the resolve, which remounts everything below it at the
-              instant the boot lands. `CascadeText` reads its `delay` at mount,
-              so this is what lets the word cascade be timed against the resolve
-              rather than against a boot duration the hero can no longer know.
-              The outer gates still hold the column at `HIDDEN` until then; the
-              key retimes, the gate hides, and they are separate jobs. */}
-          <div key={isResolved ? "revealed" : "pending"}>
+              Keyed on the resolve, which remounts at the instant the boot lands.
+              `CascadeText` reads its `delay` at mount, so this is what lets the
+              word cascade be timed against the resolve rather than against a
+              boot duration the hero can no longer know. */}
+          <div
+            key={isResolved ? "headline-revealed" : "headline-pending"}
+            className="relative z-10 order-1 lg:col-start-1 lg:row-start-1"
+          >
             <motion.div
               initial={GATHERED}
               animate={isResolved ? SETTLED : GATHERED}
@@ -241,20 +271,31 @@ export function Hero({ specialists }: HeroProps) {
                 className="font-display text-ink max-w-[13ch] text-6xl leading-[1.1] font-extrabold tracking-[-0.035em] sm:text-7xl lg:text-8xl"
               />
             </motion.div>
+          </div>
 
+          {/* ================= Lead — under the headline on lg, under the cube on small screens == */}
+          <div
+            key={isResolved ? "lead-revealed" : "lead-pending"}
+            className="relative z-10 order-3 lg:col-start-1 lg:row-start-2"
+          >
             <motion.p
               initial={HIDDEN}
               animate={isResolved ? SHOWN : HIDDEN}
               transition={{ duration: DUR.slow, delay: DELAY.lead, ease: EASE.out }}
-              className="font-display text-lead text-muted mt-8 max-w-lg"
+              className="font-display text-lead text-muted mt-2 max-w-lg lg:mt-8"
             >
               Demand generation, platforms, and bespoke software — designed and run by one team, so
               the strategy and the thing that ships are never two different conversations.
             </motion.p>
           </div>
 
-          {/* ================= Right: the 3D scene, then the stats ========= */}
-          <div>
+          {/* ================= Scene + cards =================
+              `contents` below `lg` lets the cube and the cards take their own
+              order in the stack (cube, then lead, then cards). At `lg` this
+              becomes a normal right column again so the cards stay under the
+              scene. */}
+          <div className="contents lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:block">
+            <div className="order-2 lg:order-none">
             {/* No card, no frame — the canvas sits directly on the page.
 
                 Three nested boxes, which is two more than looks necessary:
@@ -282,26 +323,39 @@ export function Hero({ specialists }: HeroProps) {
                 only option.
 
                 Position tuning still lives on the outer and inner boxes. The
-                inner clip carries its own fixed `lg:h-152` rather than
-                inheriting the outer box's height, because the canvas must keep
-                its dimensions or Spline re-frames the scene — its camera fits
-                to the canvas box. That leaves two independent knobs:
+                inner clip carries its own fixed height rather than inheriting
+                the outer box's, because the canvas must keep its dimensions or
+                Spline re-frames the scene — its camera fits to the canvas box.
+                `h-full` cannot do that job: the outer box is sized with
+                `min-height` / a shorter `lg:h-110`, and a percentage height on
+                an absolutely positioned child resolves against a specified
+                `height`, not `min-height`. Below `lg` that made the clip 0px
+                tall and hid the object. Explicit `h-125` (and `lg:h-152`)
+                is the height the camera is framed against. That leaves two
+                independent knobs:
 
-                  `lg:-translate-y-30` on the inner clip moves the object
-                  itself up or down.
+                  `-translate-y-*` on the inner clip moves the object itself
+                  up or down.
 
-                  `lg:h-110` on the outer box sets where the column ends, and
-                  therefore the gap before the cards. The canvas runs longer
-                  than that and the surplus is transparent, so trimming this
-                  pulls the cards up without touching the object. Trim too far
-                  and it starts cutting into the object's bottom edge. */}
+                  `h-*` on the outer box sets where the column ends, and
+                  therefore the gap before the cards. Below `lg` that box is
+                  shorter than the canvas so the object sits against the
+                  heading instead of in a 500px well — the canvas runs longer
+                  than the box and the surplus is transparent, so trimming
+                  pulls the cards up without touching the object. Trim too
+                  far and it starts cutting into the object's bottom edge. */}
             <motion.div
               // Only when the intro is actually playing. Without the gate, a
               // repeat visit resolves the phase in the reconciliation right
               // after hydration — one commit measured at screen centre, the
               // next in this column — and Motion would fly the core across the
               // page on what should be an ordinary load.
-              layout={intro}
+              // Position only, and only on the laptop split. Size is allowed to
+              // differ by breakpoint; interpolating width/height would stretch
+              // the WebGL canvas mid-flight. Below `lg` there is no fixed box
+              // to glide from, so layout stays off and the inner scale spring
+              // carries the entrance.
+              layout={intro && isLaptop ? "position" : false}
               transition={RESOLVE}
               data-boot="core"
               className={cn(
@@ -319,7 +373,7 @@ export function Hero({ specialists }: HeroProps) {
                     // the glide a translation rather than a 14% vertical
                     // stretch of the canvas.
                     "pointer-events-none fixed inset-0 z-30 m-auto h-125 w-[min(90vw,38rem)]"
-                  : "relative min-h-125 w-full lg:h-110",
+                  : "relative -mt-6 h-60 w-full sm:-mt-4 sm:h-64 lg:mt-0 lg:min-h-125 lg:h-110",
               )}
             >
               {/* Hidden outright while the curtain is up rather than
@@ -336,7 +390,19 @@ export function Hero({ specialists }: HeroProps) {
                 }}
                 transition={phase === "core" ? CORE_IN : RESOLVE}
               >
-                <div className="absolute inset-x-0 top-0 h-full overflow-hidden lg:h-152 lg:-translate-y-30">
+                <div
+                  className={cn(
+                    "absolute inset-x-0 top-0 overflow-hidden",
+                    // Same canvas box in both poses so Spline does not re-frame
+                    // mid-glide. The upward nudge is resting-only: during the
+                    // centred core beat the object has to sit on the screen
+                    // midline, and the mobile crop that hugs the heading would
+                    // pull it off-centre if it stayed on.
+                    isCentred
+                      ? "h-125 lg:h-152"
+                      : "h-125 -translate-y-44 sm:-translate-y-36 lg:h-152 lg:-translate-y-30",
+                  )}
+                >
                   <SplineScene
                     scene={SPLINE_SCENE}
                     label="Rotating abstract 3D form"
@@ -347,6 +413,7 @@ export function Hero({ specialists }: HeroProps) {
                 </div>
               </motion.div>
             </motion.div>
+          </div>
 
             {/* Stat cards. The overlapping side-by-side cluster only switches
                 on at `xl`: side by side the pair is ~550px wide, and this
@@ -354,21 +421,24 @@ export function Hero({ specialists }: HeroProps) {
                 which the second card would overflow it. Every width beneath
                 that stacks them instead.
 
+                On small screens these sit under the lead (order-4); at `lg`
+                they return under the scene in the right column.
+
                 While the core is centred this cluster sits alone at the top of
                 the column, because a `fixed` core is out of flow. It is still
                 fully transparent at that point, and it is back in place before
                 its own entrance begins.
 
-                Keyed on the resolve for the same reason the left column is:
+                Keyed on the resolve for the same reason the headline is:
                 `FloatingCard` and `CountUp` both start at mount. Unlike that
                 column these cards carry no gate of their own — their entrance
                 *is* `FloatingCard`'s — so the pre-resolve mount is held at zero
                 here. Nested opacity multiplies, so once this clears the cards
                 are still at their own zero and their delays run untouched. */}
             <div
-              key={isResolved ? "revealed" : "pending"}
+              key={isResolved ? "cards-revealed" : "cards-pending"}
               className={cn(
-                "mt-8 flex max-w-sm flex-col gap-5 xl:mt-10 xl:max-w-none xl:flex-row xl:items-start xl:gap-0",
+                "order-4 mt-4 flex max-w-sm flex-col gap-5 lg:order-none xl:mt-10 xl:max-w-none xl:flex-row xl:items-start xl:gap-0",
                 !isResolved && "opacity-0",
               )}
             >
